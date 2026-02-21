@@ -3,14 +3,31 @@
 import { useState, useEffect } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { Article } from '@/types';
 import { createClient } from '@/utils/supabase/client';
 // Image import is removed as thumbnails are no longer displayed in search results
 
+const CATEGORY_NAMES: Record<string, string> = {
+    'news': '最新ニュース',
+    'rumors': '噂・リーク',
+    'lens': 'レンズ',
+    'body': 'カメラボディ',
+    'tips': 'チュートリアル'
+};
+
+interface SearchResult {
+    id: string;
+    title: string;
+    category: string;
+    published_at: string;
+}
+
 export function SearchModal() {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [results, setResults] = useState<Partial<Article>[]>([]);
+    const [results, setResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const supabase = createClient();
 
@@ -121,8 +138,8 @@ export function SearchModal() {
                                     <div className="flex items-center justify-between">
                                         <span className="font-medium group-hover:text-primary transition-colors line-clamp-1">{result.title}</span>
                                     </div>
-                                    <span className="text-xs text-muted-foreground mt-1 inline-block bg-muted px-2 py-0.5 rounded">
-                                        {result.category}
+                                    <span className="text-xs font-semibold px-2 py-0.5 bg-primary/20 text-primary rounded">
+                                        {CATEGORY_NAMES[result.category] || result.category}
                                     </span>
                                 </Link>
                             ))}

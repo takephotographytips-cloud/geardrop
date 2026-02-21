@@ -7,6 +7,14 @@ import { Article } from "@/types";
 import { BookmarkButton } from "./BookmarkButton";
 import { createClient } from '@/utils/supabase/server';
 
+const CATEGORY_NAMES: Record<string, string> = {
+    'news': '最新ニュース',
+    'rumors': '噂・リーク',
+    'lens': 'レンズ',
+    'body': 'カメラボディ',
+    'tips': 'チュートリアル'
+};
+
 interface ArticleCardProps {
     article: Article;
 }
@@ -46,7 +54,7 @@ export async function ArticleCard({ article }: ArticleCardProps) {
                 )}
                 <div className="absolute top-3 left-3 flex gap-2">
                     <span className="px-2.5 py-1 text-xs font-semibold bg-background/90 text-foreground backdrop-blur-sm rounded-md shadow-sm">
-                        {article.category}
+                        {CATEGORY_NAMES[article.category] || article.category}
                     </span>
                     {article.manufacturer && (
                         <span className="px-2.5 py-1 text-xs font-semibold bg-primary/90 text-primary-foreground backdrop-blur-sm rounded-md shadow-sm">

@@ -14,13 +14,41 @@ export default async function Home() {
     .order('published_at', { ascending: false })
     .limit(6);
   return (
-    <div className="container mx-auto px-4 py-12">
-      <section className="mb-16">
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      {/* Hero Section */}
+      <section className="relative w-full rounded-3xl overflow-hidden mb-16 border border-border/50 shadow-2xl bg-gradient-to-b from-secondary/50 to-background flex flex-col items-center justify-center py-20 px-4 text-center">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/15 via-background/0 to-background/0 pointer-events-none"></div>
+
+        <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            <span>AI-Powered News Aggregation</span>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+            世界のカメラニュースを、<br className="md:hidden" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">毎朝3分で。</span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl leading-relaxed">
+            海外メディアの最新機材情報やリークをAIが瞬時に要約。<br className="hidden md:block" />
+            忙しいクリエイターのための、ノイズレスな情報収集プラットフォーム。
+          </p>
+
+          <Link href="#latest" className="px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-primary/40 transition-all flex items-center gap-2">
+            最新記事を読む
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section id="latest" className="mb-16 scroll-mt-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-border/50">
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">
               Latest Updates
-            </h1>
+            </h2>
             <p className="text-muted-foreground">
               写真・映像クリエイターのための最新ニュースとリーク情報
             </p>

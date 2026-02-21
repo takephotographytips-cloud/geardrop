@@ -7,8 +7,25 @@ import { Footer } from "@/components/layout/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GearDrop - 写真・映像クリエイター向け最新情報",
-  description: "最新のカメラ機材、レンズ、そして業界のリーク情報をいち早くお届けします。",
+  metadataBase: new URL('https://geardrop.com'), // Adjust to actual prod domain later
+  title: {
+    template: "%s | GearDrop",
+    default: "GearDrop | クリエイター向け最新機材ニュース＆リーク情報",
+  },
+  description: "世界のカメラニュースを、毎朝3分で。海外メディアの最新機材情報やリークをAIが瞬時に要約。忙しい写真・映像クリエイターのためのノイズレスな情報収集プラットフォーム。",
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    url: "https://geardrop.com",
+    title: "GearDrop | 最新カメラ技術で未来を写す",
+    description: "世界のカメラニュースを、毎朝3分で。海外メディアの最新機材情報やリークをAIが瞬時に要約。",
+    siteName: "GearDrop",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GearDrop | 最新カメラ技術で未来を写す",
+    description: "世界のカメラニュースを、毎朝3分で。海外メディアの最新機材情報やリークをAIが瞬時に要約。",
+  }
 };
 
 export default function RootLayout({
