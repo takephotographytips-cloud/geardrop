@@ -11,8 +11,8 @@ export async function Header() {
         <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="relative w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center p-0.5 group-hover:opacity-80 transition-opacity bg-primary/10">
-                        <Image src="/logo.png" alt="GearDrop Logo" width={28} height={28} className="object-contain drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                    <div className="relative w-8 h-8 flex items-center justify-center group-hover:opacity-80 transition-opacity">
+                        <Image src="/logo-transparent.png" alt="GearDrop Logo" width={28} height={28} className="object-contain drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]" />
                     </div>
                     <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">GearDrop</span>
                 </Link>
