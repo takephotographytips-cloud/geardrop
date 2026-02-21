@@ -1,0 +1,32 @@
+name: Auto Fetch News
+
+on:
+  schedule:
+    # 毎日 日本時間の 6:00, 12:00, 18:00 (UTCの 21:00, 03:00, 09:00)
+    - cron: '0 3,9,21 * * *'
+  # GitHubの画面から手動でも実行できるようにする
+  workflow_dispatch:
+
+jobs:
+  fetch-news:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run fetch-news script
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node scripts/fetch-news.mjs
