@@ -7,7 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://geardrop.com'), // Adjust to actual prod domain later
+  metadataBase: new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://geardrop.vercel.app'),
   title: {
     template: "%s | GearDrop",
     default: "GearDrop | クリエイター向け最新機材ニュース＆リーク情報",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ja_JP",
-    url: "https://geardrop.com",
+    url: "https://geardrop.vercel.app",
     title: "GearDrop | AIで毎朝3分の機材ニュース収集",
     description: "海外メディアの最新機材情報やリークをAIが瞬時に要約。忙しい写真・映像クリエイターのためのノイズレスな情報収集プラットフォーム。",
     siteName: "GearDrop",
