@@ -17,14 +17,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ja_JP",
     url: "https://geardrop.com",
-    title: "GearDrop | 最新カメラ技術で未来を写す",
-    description: "世界のカメラニュースを、毎朝3分で。海外メディアの最新機材情報やリークをAIが瞬時に要約。",
+    title: "GearDrop | AIで毎朝3分の機材ニュース収集",
+    description: "海外メディアの最新機材情報やリークをAIが瞬時に要約。忙しい写真・映像クリエイターのためのノイズレスな情報収集プラットフォーム。",
     siteName: "GearDrop",
   },
   twitter: {
     card: "summary_large_image",
-    title: "GearDrop | 最新カメラ技術で未来を写す",
-    description: "世界のカメラニュースを、毎朝3分で。海外メディアの最新機材情報やリークをAIが瞬時に要約。",
+    title: "GearDrop | AIで毎朝3分の機材ニュース収集",
+    description: "海外メディアの最新機材情報やリークをAIが瞬時に要約。忙しい写真・映像クリエイターのためのノイズレスな情報収集プラットフォーム。",
   }
 };
 

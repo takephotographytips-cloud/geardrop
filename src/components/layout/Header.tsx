@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Camera, Bookmark, LogOut } from "lucide-react";
+import Image from "next/image";
+import { Bookmark, LogOut } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { SearchModal } from "@/components/ui/SearchModal";
 
@@ -10,10 +11,10 @@ export async function Header() {
         <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="bg-primary/10 p-2 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <Camera className="w-5 h-5 text-primary" />
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center p-0.5 group-hover:opacity-80 transition-opacity bg-primary/10">
+                        <Image src="/logo.png" alt="GearDrop Logo" width={28} height={28} className="object-contain drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                     </div>
-                    <span className="font-bold text-lg tracking-tight">GearDrop</span>
+                    <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">GearDrop</span>
                 </Link>
 
 
