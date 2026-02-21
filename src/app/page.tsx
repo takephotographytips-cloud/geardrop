@@ -26,7 +26,7 @@ export default async function Home() {
           </div>
 
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
-            世界のカメラニュースを、<br className="md:hidden" />
+            世界のカメラニュースを、<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">毎朝3分で。</span>
           </h1>
 
