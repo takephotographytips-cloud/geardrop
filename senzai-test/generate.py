@@ -11,6 +11,7 @@ import time
 import webbrowser
 from datetime import datetime
 from pathlib import Path
+from typing import List, Optional
 
 import replicate
 import requests
@@ -56,7 +57,7 @@ def try_face_detection(img_path: Path) -> int:
         return -1  # opencv なしの場合はスキップ
 
 
-def check_input_images(selfies: list[Path]) -> list[Path]:
+def check_input_images(selfies: List[Path]) -> List[Path]:
     """画像の解像度・顔の有無を簡易チェックし、警告を出す。"""
     print(f"\n── 入力チェック ({len(selfies)} 枚) ──────────────────────────")
     valid = []
@@ -90,7 +91,7 @@ def check_input_images(selfies: list[Path]) -> list[Path]:
     return valid
 
 
-def generate_with_retry(selfie_path: Path, preset: dict, seed: int, run_dir: Path) -> dict | None:
+def generate_with_retry(selfie_path: Path, preset: dict, seed: int, run_dir: Path) -> Optional[dict]:
     """1枚分を生成してダウンロード。失敗は最大 MAX_RETRIES 回リトライ。"""
     stem = selfie_path.stem
     out_filename = f"{stem}_s{seed}.png"
@@ -161,7 +162,7 @@ def generate_with_retry(selfie_path: Path, preset: dict, seed: int, run_dir: Pat
                 }
 
 
-def generate_report(run_dir: Path, logs: list[dict], selfies: list[Path]):
+def generate_report(run_dir: Path, logs: List[dict], selfies: List[Path]):
     """report.html を生成する。"""
 
     total_cost_usd = sum(r["cost_usd"] for r in logs)
