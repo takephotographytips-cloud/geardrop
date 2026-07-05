@@ -1,0 +1,20 @@
+name: iOS Build & Test
+
+# macOS ランナーは消費分数が大きいため手動実行のみ
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test (iOS Simulator)
+        working-directory: CollageApp
+        run: |
+          xcodebuild test \
+            -project CollageApp.xcodeproj \
+            -scheme CollageApp \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            CODE_SIGNING_ALLOWED=NO
