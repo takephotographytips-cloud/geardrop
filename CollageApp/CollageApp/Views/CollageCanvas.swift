@@ -1,9 +1,15 @@
 import SwiftUI
 
-extension BackgroundColorChoice {
+extension CanvasColor {
     var color: Color {
-        let rgba = rgba
-        return Color(.sRGB, red: rgba.red, green: rgba.green, blue: rgba.blue, opacity: rgba.alpha)
+        Color(.sRGB, red: red, green: green, blue: blue)
+    }
+
+    /// SwiftUI Color（カラーピッカーの選択値）から生成する
+    init(_ color: Color) {
+        var red: CGFloat = 1, green: CGFloat = 1, blue: CGFloat = 1, alpha: CGFloat = 1
+        UIColor(color).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        self.init(red: Double(red), green: Double(green), blue: Double(blue))
     }
 }
 

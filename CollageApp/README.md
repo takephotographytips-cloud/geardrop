@@ -25,10 +25,22 @@
 - [x] プレビューと書き出しは同じ `CellGeometry` を通り、見た目が一致
 - [x] `CollageLayout`(均等分割)+ `CellGeometry`(カバー+変形)のユニットテスト
 
-### Phase 2〜4(未実装)
-- ExportRenderer のフル解像度化(16bit 合成・Display P3・EXIF 保持)
-- スポイト+カラーピッカー、ガター(間隔)スライダー
+### Phase 2: 品質 ✅(このコミット)
+- [x] ExportRenderer フル解像度化(差別化の核)
+  - 元画像を CGContext で1枚ずつ順次デコード・合成(メモリ対策)
+  - 10bit 以上の素材があれば 16bit コンテキストで合成(バンディング防止)
+  - Display P3 素材があれば P3 のまま合成(カラースペース維持)
+  - 出力長辺は「どの写真も元解像度を超えない」値を自動計算(8bit: 最大8192px / 16bit: 最大5120px)
+  - 1枚目の EXIF(撮影日時・カメラ・レンズ)を書き出しにコピー(設定で ON/OFF)
+  - HEIC(デフォルト)/ JPEG 最高画質(設定で切替)
+- [x] 背景色: プリセット3色 + カラーピッカー(スポイト内蔵、写真から色を拾える)
+- [x] 間隔(ガター)スライダー 0〜10%
+- [x] 設定画面(ホームのギアアイコン: 書き出し形式・EXIF 保持のみの最小構成)
+- [x] 出力解像度計算のユニットテスト
+
+### Phase 3〜4(未実装)
 - プリセット保存/呼び出し UI、StoreKit 2 プリセットパック
+- 編集途中の状態復元(アプリ再起動時)
 - リリース準備(アイコン・スクリーンショット)
 
 ## 要件
@@ -66,12 +78,13 @@ CollageApp/
 │   └── Preset.swift                Codable プリセット
 ├── ViewModels/EditorViewModel.swift  @Observable。セル変形・Undo/Redo スタック含む
 ├── Views/
-│   ├── HomeView.swift              画面A: ホーム
+│   ├── HomeView.swift              画面A: ホーム(ギア→設定)
 │   ├── EditorView.swift            画面B: エディタ(レイアウト切替セグメント)
 │   ├── CollageCanvas.swift         キャンバス+セル(ドラッグ/ピンチのジェスチャー処理)
-│   └── AdjustPanel.swift           余白・色・比率の調整パネル
+│   ├── AdjustPanel.swift           余白・間隔・色・比率の調整パネル
+│   └── SettingsView.swift          設定(書き出し形式・EXIF 保持)
 ├── Rendering/
-│   ├── CollageRenderer.swift       プレビュー解像度の合成
-│   └── ExportRenderer.swift        フォトライブラリ書き出し(Phase 2 でフル解像度化)
+│   ├── CollageRenderer.swift       プレビュー解像度の合成(プリセットサムネイル等に使用予定)
+│   └── ExportRenderer.swift        フル解像度書き出し(16bit・P3・EXIF・HEIC/JPEG)
 └── Store/PresetStore.swift         JSON 永続化(StoreKit 2 は Phase 3)
 ```

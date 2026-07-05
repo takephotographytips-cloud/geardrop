@@ -10,9 +10,11 @@ import SwiftUI
 final class EditorViewModel {
 
     /// 選択写真。image はプレビュー用（長辺2048px、仕様 3.2）。
+    /// originalData はフル解像度書き出し用の元データ（圧縮のまま保持し、書き出し時に順次デコード）。
     struct Photo: Identifiable {
         let id = UUID()
         let image: UIImage
+        let originalData: Data
 
         /// 幅 ÷ 高さ
         var aspectRatio: CGFloat {
@@ -65,7 +67,7 @@ final class EditorViewModel {
         for item in items {
             guard let data = try? await item.loadTransferable(type: Data.self),
                   let image = Self.downsample(data: data, maxPixelSize: 2048) else { continue }
-            loaded.append(Photo(image: image))
+            loaded.append(Photo(image: image, originalData: data))
         }
         photos = loaded
         layoutIndex = 0
@@ -92,17 +94,17 @@ final class EditorViewModel {
     // MARK: - 保存
 
     /// タップ3: フォトライブラリへ書き出す。
-    /// Phase 1 はプレビュー解像度（長辺2048px）で可（仕様 Phase 1）。
-    /// フル解像度・16bit 合成・EXIF 保持は Phase 2 の ExportRenderer で対応する。
+    /// Phase 2: 元画像フル解像度で合成（16bit・P3・EXIF 保持は ExportRenderer 側）。
     func saveToPhotoLibrary() async {
         guard let layout = currentLayout, !photos.isEmpty else { return }
         saveState = .saving
         do {
             try await ExportRenderer.export(
-                images: photos.map(\.image),
+                photoDatas: photos.map(\.originalData),
                 transforms: orderedTransforms,
                 layout: layout,
-                spec: spec
+                spec: spec,
+                options: .fromUserDefaults()
             )
             saveState = .saved
         } catch {
@@ -130,6 +132,10 @@ final class EditorViewModel {
         if undoStack.last != snapshot {
             undoStack.append(snapshot)
             redoStack.removeAll()
+            // カラーピッカーの連続変更などでの肥大化を防ぐ
+            if undoStack.count > 100 {
+                undoStack.removeFirst(undoStack.count - 100)
+            }
         }
     }
 

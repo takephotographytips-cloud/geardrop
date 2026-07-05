@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var isPickerPresented = false
     @State private var showEditor = false
+    @State private var showSettings = false
     @State private var didAutoPresentPicker = false
 
     var body: some View {
@@ -39,6 +40,19 @@ struct HomeView: View {
             }
             .padding()
             .navigationTitle("Stack")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("設定")
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
             .navigationDestination(isPresented: $showEditor) {
                 EditorView(viewModel: viewModel)
             }

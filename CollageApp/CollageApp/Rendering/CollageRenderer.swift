@@ -28,12 +28,12 @@ enum CollageRenderer {
         let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
 
         return renderer.image { context in
-            let rgba = spec.background.rgba
+            let background = spec.background
             UIColor(
-                red: rgba.red,
-                green: rgba.green,
-                blue: rgba.blue,
-                alpha: rgba.alpha
+                red: background.red,
+                green: background.green,
+                blue: background.blue,
+                alpha: 1
             ).setFill()
             context.fill(CGRect(origin: .zero, size: canvasSize))
 

@@ -32,31 +32,18 @@ enum CanvasRatio: String, CaseIterable, Identifiable, Codable {
     }
 }
 
-/// 余白（フレーム）の背景色。Phase 1 は白 / 黒 / オフホワイトの3色。
-/// スポイト・カラーピッカーは Phase 2 で追加する。
-enum BackgroundColorChoice: String, CaseIterable, Identifiable, Codable {
-    case white
-    case black
-    case offWhite
+/// 余白（フレーム）の背景色。sRGB 成分で保持する。
+/// プリセット3色（白 / 黒 / オフホワイト #F5F2ED）に加え、
+/// カラーピッカー（スポイト内蔵）で任意の色を設定できる（Phase 2）。
+struct CanvasColor: Codable, Equatable {
+    var red: Double
+    var green: Double
+    var blue: Double
 
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .white: return "白"
-        case .black: return "黒"
-        case .offWhite: return "オフホワイト"
-        }
-    }
-
-    /// sRGB 成分。オフホワイトは #F5F2ED（仕様 2.2）
-    var rgba: (red: Double, green: Double, blue: Double, alpha: Double) {
-        switch self {
-        case .white: return (1.0, 1.0, 1.0, 1.0)
-        case .black: return (0.0, 0.0, 0.0, 1.0)
-        case .offWhite: return (0xF5 / 255.0, 0xF2 / 255.0, 0xED / 255.0, 1.0)
-        }
-    }
+    static let white = CanvasColor(red: 1, green: 1, blue: 1)
+    static let black = CanvasColor(red: 0, green: 0, blue: 0)
+    /// オフホワイト #F5F2ED（仕様 2.2）
+    static let offWhite = CanvasColor(red: 0xF5 / 255.0, green: 0xF2 / 255.0, blue: 0xED / 255.0)
 }
 
 /// キャンバス設定（比率・余白・ガター・背景色）。
@@ -66,10 +53,11 @@ struct CanvasSpec: Codable, Equatable {
     var ratio: CanvasRatio = .fourFive
     /// 外周余白（短辺比 0〜0.15）
     var marginFraction: CGFloat = 0.05
-    /// 写真同士の間隔（短辺比）。Phase 1 は固定デフォルト、スライダーは Phase 2。
+    /// 写真同士の間隔（短辺比 0〜0.10）
     var gutterFraction: CGFloat = 0.02
     /// 背景色
-    var background: BackgroundColorChoice = .offWhite
+    var background: CanvasColor = .offWhite
 
     static let marginRange: ClosedRange<CGFloat> = 0.0...0.15
+    static let gutterRange: ClosedRange<CGFloat> = 0.0...0.10
 }
