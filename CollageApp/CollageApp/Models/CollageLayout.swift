@@ -27,8 +27,9 @@ enum CollageLayout: String, CaseIterable, Identifiable, Codable {
     }
 
     /// 選択枚数に応じたレイアウト候補。先頭がデフォルト。
+    /// 1枚のときは縦・横とも同一（コンテンツ領域全体の1セル）になる。
     static func candidates(for photoCount: Int) -> [CollageLayout] {
-        guard (2...6).contains(photoCount) else { return [] }
+        guard (1...6).contains(photoCount) else { return [] }
         return [.verticalStack, .horizontalRow]
     }
 

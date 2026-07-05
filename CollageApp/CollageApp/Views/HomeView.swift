@@ -26,7 +26,7 @@ struct HomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                Text("2〜6枚を選ぶと自動でレイアウトします")
+                Text("1〜6枚を選ぶと自動でレイアウトします")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
@@ -90,14 +90,14 @@ struct HomeView: View {
 
     private func openEditorIfReady() {
         let items = pickerItems
-        guard items.count >= 2 else {
+        guard !items.isEmpty else {
             pickerItems = []
             return
         }
         Task {
             await viewModel.loadPhotos(from: items)
             pickerItems = []
-            if viewModel.photos.count >= 2 {
+            if !viewModel.photos.isEmpty {
                 showEditor = true
             }
         }

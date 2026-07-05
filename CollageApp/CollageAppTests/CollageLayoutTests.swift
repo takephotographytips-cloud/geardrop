@@ -25,11 +25,25 @@ final class CollageLayoutTests: XCTestCase {
     // MARK: - レイアウト候補
 
     func testCandidatesPerPhotoCount() {
-        for count in 2...6 {
+        for count in 1...6 {
             XCTAssertEqual(CollageLayout.candidates(for: count), [.verticalStack, .horizontalRow])
         }
-        XCTAssertTrue(CollageLayout.candidates(for: 1).isEmpty)
+        XCTAssertTrue(CollageLayout.candidates(for: 0).isEmpty)
         XCTAssertTrue(CollageLayout.candidates(for: 7).isEmpty)
+    }
+
+    /// 1枚のときは縦・横ともコンテンツ領域全体の1セルになる。
+    func testSinglePhoto_cellFillsContentArea() {
+        let canvasSize = CGSize(width: 800, height: 1000)
+        for layout in CollageLayout.candidates(for: 1) {
+            let cells = layout.cellRects(
+                canvasSize: canvasSize,
+                spec: spec(ratio: .fourFive),
+                count: 1
+            )
+            XCTAssertEqual(cells.count, 1)
+            assertRect(cells[0], x: 40, y: 40, width: 720, height: 920)
+        }
     }
 
     // MARK: - 縦並び: 高さ均等・幅共通
@@ -81,7 +95,7 @@ final class CollageLayoutTests: XCTestCase {
 
     /// 全レイアウト・全比率・全枚数で、セルサイズが完全に均等であること。
     func testCellRects_equalSizes_allLayouts() {
-        for count in 2...6 {
+        for count in 1...6 {
             for layout in CollageLayout.candidates(for: count) {
                 for canvasRatio in CanvasRatio.allCases {
                     let cells = layout.cellRects(
@@ -104,7 +118,7 @@ final class CollageLayoutTests: XCTestCase {
 
     /// 全レイアウトで、セルが余白の内側（コンテンツ領域）にちょうど収まる。
     func testCellRects_fillContentArea_allLayouts() {
-        for count in 2...6 {
+        for count in 1...6 {
             for layout in CollageLayout.candidates(for: count) {
                 for canvasRatio in CanvasRatio.allCases {
                     let canvasSize = canvasRatio.size(longSide: 2048)

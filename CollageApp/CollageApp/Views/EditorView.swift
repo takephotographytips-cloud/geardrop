@@ -15,13 +15,16 @@ struct EditorView: View {
                 .padding(.top, 16)
                 .frame(maxHeight: .infinity)
 
-            Picker("レイアウト", selection: layoutSelection) {
-                ForEach(Array(viewModel.layouts.enumerated()), id: \.offset) { index, layout in
-                    Text(layout.displayName).tag(index)
+            // 1枚のときは縦・横が同一レイアウトになるため切替を出さない
+            if viewModel.photos.count > 1 {
+                Picker("レイアウト", selection: layoutSelection) {
+                    ForEach(Array(viewModel.layouts.enumerated()), id: \.offset) { index, layout in
+                        Text(layout.displayName).tag(index)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
 
             AdjustPanel(viewModel: viewModel)
                 .padding(.horizontal)
