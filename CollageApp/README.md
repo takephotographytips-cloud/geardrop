@@ -64,10 +64,14 @@
 - [x] `Products.storekit` はローカルテスト用に Stack Pro 1商品(¥980)
 - [x] 旧保存データとの後方互換(frame キーのないプリセット/セッションもデコード可)
 
-### Phase 4(未実装)
-- アプリアイコン・App Store スクリーンショット
-- App Store Connect での IAP 商品登録(productID: `com.dstudio.collageapp.pro`)
-- プライバシー: データ収集ゼロで申告
+### Phase 4: リリース準備 🚧(このコミット)
+- [x] アプリアイコン(オフホワイト+縦積みモチーフ、プログラム生成 1024px)
+- [x] 表示名 `Stack`・暗号化申告 `ITSAppUsesNonExemptEncryption = NO` を設定
+- [x] App Store メタデータドラフト → `AppStore/metadata_ja.md`
+  (アプリ名候補・説明文・キーワード・IAP 文言・プライバシーポリシー文面・審査メモ)
+- [x] リリース手順書 → `AppStore/release_checklist.md`
+  (署名 / IAP 登録 / スクリーンショット構成 / アーカイブ / 提出 / トラブルシューティング)
+- [ ] あなたの手作業: Apple Developer 加入、App Store Connect 登録、スクリーンショット撮影、実機確認、提出
 
 ## 要件
 
