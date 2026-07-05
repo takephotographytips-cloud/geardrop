@@ -2,7 +2,9 @@ import PhotosUI
 import SwiftUI
 
 /// 画面A: ホーム（仕様 2.2）。
-/// タップ1: 起動直後に PhotosPicker が開き、写真を2〜6枚選択する（選んだ順＝配置順）。
+/// タップ1: 起動直後に PhotosPicker が開き、写真を1〜6枚選択する（選んだ順＝配置順）。
+/// 下部に保存済みプリセット＋購入済みパックのプリセットを横スクロールで表示し、
+/// タップするとそのプリセットを適用した状態で写真選択に進む。
 struct HomeView: View {
     @State private var viewModel = EditorViewModel()
     @State private var presetStore = PresetStore()
@@ -10,7 +12,10 @@ struct HomeView: View {
     @State private var isPickerPresented = false
     @State private var showEditor = false
     @State private var showSettings = false
+    @State private var showPackStore = false
     @State private var didAutoPresentPicker = false
+    @State private var pendingPreset: Preset?
+    @State private var hasStoredSession = false
 
     var body: some View {
         NavigationStack {
@@ -31,12 +36,18 @@ struct HomeView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
+                if canResume {
+                    Button {
+                        resumeSession()
+                    } label: {
+                        Label("前回の編集を再開", systemImage: "arrow.uturn.backward.circle")
+                    }
+                    .buttonStyle(.bordered)
+                }
+
                 Spacer()
 
-                // 保存済みプリセット一覧（横スクロール）。保存 UI は Phase 3 で追加。
-                if !presetStore.presets.isEmpty {
-                    presetRow
-                }
+                presetSection
             }
             .padding()
             .navigationTitle("Stack")
@@ -53,8 +64,11 @@ struct HomeView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
+            .sheet(isPresented: $showPackStore) {
+                PackStoreView(store: presetStore)
+            }
             .navigationDestination(isPresented: $showEditor) {
-                EditorView(viewModel: viewModel)
+                EditorView(viewModel: viewModel, presetStore: presetStore)
             }
             .photosPicker(
                 isPresented: $isPickerPresented,
@@ -68,8 +82,10 @@ struct HomeView: View {
                 openEditorIfReady()
             }
             .onAppear {
-                // タップ1を最短にするため、初回起動時はピッカーを自動で開く（仕様 2.1）
-                if !didAutoPresentPicker {
+                hasStoredSession = SessionStore.hasSession()
+                // タップ1を最短にするため初回はピッカーを自動で開く（仕様 2.1）。
+                // ただし再開できるセッションがあるときは選択を邪魔しない。
+                if !didAutoPresentPicker, !canResume {
                     didAutoPresentPicker = true
                     isPickerPresented = true
                 }
@@ -84,20 +100,88 @@ struct HomeView: View {
         }
     }
 
-    private var presetRow: some View {
+    // MARK: - プリセット一覧
+
+    /// ユーザー保存プリセット + 購入済みパックのプリセット
+    private var allPresets: [Preset] {
+        presetStore.presets + presetStore.unlockedPackPresets
+    }
+
+    private var presetSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("プリセット")
-                .font(.headline)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(presetStore.presets) { preset in
-                        Text(preset.name)
+            HStack {
+                Text("プリセット")
+                    .font(.headline)
+                Spacer()
+                if !presetStore.allPacksUnlocked {
+                    Button {
+                        showPackStore = true
+                    } label: {
+                        Label("パックを入手", systemImage: "sparkles")
                             .font(.subheadline)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(.quaternary, in: Capsule())
                     }
                 }
+            }
+            if allPresets.isEmpty {
+                Text("エディタ右上のしおりボタンで、現在の設定をプリセットとして保存できます")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(allPresets) { preset in
+                            presetChip(preset)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func presetChip(_ preset: Preset) -> some View {
+        Button {
+            pendingPreset = preset
+            isPickerPresented = true
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Label(preset.name, systemImage: preset.layout.symbolName)
+                    .font(.subheadline)
+                Text("\(preset.spec.ratio.rawValue)・余白\(Int((preset.spec.marginFraction * 100).rounded()))%")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if presetStore.isUserPreset(preset) {
+                Button("削除", role: .destructive) {
+                    presetStore.remove(preset)
+                }
+            }
+        }
+    }
+
+    // MARK: - フロー
+
+    private var canResume: Bool {
+        hasStoredSession || !viewModel.photos.isEmpty
+    }
+
+    private func resumeSession() {
+        // メモリ上に編集中の状態があればそのまま戻る。なければディスクから復元。
+        if !viewModel.photos.isEmpty {
+            showEditor = true
+            return
+        }
+        Task {
+            if await viewModel.restoreSessionFromDisk() {
+                showEditor = true
+            } else {
+                SessionStore.clear()
+                hasStoredSession = false
             }
         }
     }
@@ -106,14 +190,20 @@ struct HomeView: View {
         let items = pickerItems
         guard !items.isEmpty else {
             pickerItems = []
+            pendingPreset = nil
             return
         }
         Task {
             await viewModel.loadPhotos(from: items)
             pickerItems = []
             if !viewModel.photos.isEmpty {
+                if let preset = pendingPreset {
+                    viewModel.apply(preset: preset)
+                }
+                hasStoredSession = true
                 showEditor = true
             }
+            pendingPreset = nil
         }
     }
 }

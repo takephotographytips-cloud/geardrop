@@ -1,0 +1,63 @@
+{
+  "identifier" : "8F1D2C3B-0000-4000-8000-000000000001",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "480",
+      "familyShareable" : false,
+      "internalID" : "8F1D2C3B-0000-4000-8000-000000000011",
+      "localizations" : [
+        {
+          "description" : "写真展のような広い余白と端正な並びのプリセット4種",
+          "displayName" : "Gallery Pack",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "com.dstudio.collageapp.pack.gallery",
+      "referenceName" : "Gallery Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "480",
+      "familyShareable" : false,
+      "internalID" : "8F1D2C3B-0000-4000-8000-000000000012",
+      "localizations" : [
+        {
+          "description" : "暗室のような黒基調のフィルムルック4種",
+          "displayName" : "Film Pack",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "com.dstudio.collageapp.pack.film",
+      "referenceName" : "Film Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "480",
+      "familyShareable" : false,
+      "internalID" : "8F1D2C3B-0000-4000-8000-000000000013",
+      "localizations" : [
+        {
+          "description" : "雑誌の誌面のようなタイトな組みのプリセット4種",
+          "displayName" : "Editorial Pack",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "com.dstudio.collageapp.pack.editorial",
+      "referenceName" : "Editorial Pack",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_storefront" : "JPN"
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

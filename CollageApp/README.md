@@ -38,10 +38,23 @@
 - [x] 設定画面(ホームのギアアイコン: 書き出し形式・EXIF 保持のみの最小構成)
 - [x] 出力解像度計算のユニットテスト
 
-### Phase 3〜4(未実装)
-- プリセット保存/呼び出し UI、StoreKit 2 プリセットパック
-- 編集途中の状態復元(アプリ再起動時)
-- リリース準備(アイコン・スクリーンショット)
+### Phase 3: プリセット+課金 ✅(このコミット)
+- [x] プリセット保存/呼び出し
+  - エディタ右上のしおりボタンで現在の設定(レイアウト・比率・余白・間隔・色)を名前付き保存
+  - ホーム下部に一覧表示 → タップでプリセット適用済みの状態で写真選択へ(Inset レビュー要望の先回り)
+  - 長押しで削除(ユーザー保存分のみ)
+- [x] StoreKit 2 プリセットパック3種(非消耗型・各¥480、サブスクなし)
+  - Gallery / Film / Editorial 各4プリセット(アプリ内蔵、購入でホームに合流)
+  - 購入復元(`AppStore.sync`)、`Transaction.updates` 常駐リスナー、検証済みトランザクションのみ反映
+  - `Products.storekit`(ローカルテスト用 StoreKit Configuration)を同梱、スキームに紐付け済み
+- [x] 編集途中の状態復元(アプリ再起動時)
+  - 写真の元データ+設定・変形を Application Support に保存
+  - ホームに「前回の編集を再開」ボタン(セッションがあるときは起動時の自動ピッカーを抑制)
+
+### Phase 4(未実装)
+- アプリアイコン・App Store スクリーンショット
+- App Store Connect での IAP 商品登録(productID は `com.dstudio.collageapp.pack.*`)
+- プライバシー: データ収集ゼロで申告
 
 ## 要件
 
@@ -82,9 +95,15 @@ CollageApp/
 │   ├── EditorView.swift            画面B: エディタ(レイアウト切替セグメント)
 │   ├── CollageCanvas.swift         キャンバス+セル(ドラッグ/ピンチのジェスチャー処理)
 │   ├── AdjustPanel.swift           余白・間隔・色・比率の調整パネル
+│   ├── PackStoreView.swift         プリセットパック購入画面
 │   └── SettingsView.swift          設定(書き出し形式・EXIF 保持)
 ├── Rendering/
 │   ├── CollageRenderer.swift       プレビュー解像度の合成(プリセットサムネイル等に使用予定)
 │   └── ExportRenderer.swift        フル解像度書き出し(16bit・P3・EXIF・HEIC/JPEG)
-└── Store/PresetStore.swift         JSON 永続化(StoreKit 2 は Phase 3)
+└── Store/
+    ├── PresetStore.swift           プリセット永続化 + StoreKit 2(パック課金)
+    └── SessionStore.swift          編集途中の状態保存・復元
 ```
+※ `Products.storekit`(プロジェクト直下)はシミュレータで課金をテストするための StoreKit Configuration。
+スキームに紐付け済みだが、効かない場合は Product > Scheme > Edit Scheme... > Run > Options >
+StoreKit Configuration で選び直す。

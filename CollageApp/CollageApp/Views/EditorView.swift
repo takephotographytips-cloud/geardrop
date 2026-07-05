@@ -6,6 +6,11 @@ import SwiftUI
 /// タップ3: 保存ボタンでフォトライブラリへ書き出して完了。
 struct EditorView: View {
     @Bindable var viewModel: EditorViewModel
+    let presetStore: PresetStore
+
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var showPresetNameAlert = false
+    @State private var presetName = ""
 
     var body: some View {
         VStack(spacing: 16) {
@@ -49,8 +54,35 @@ struct EditorView: View {
                 .disabled(!viewModel.canRedo)
             }
 
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    presetName = ""
+                    showPresetNameAlert = true
+                } label: {
+                    Image(systemName: "bookmark")
+                }
+                .accessibilityLabel("プリセット登録")
+
                 saveButton
+            }
+        }
+        .alert("プリセット登録", isPresented: $showPresetNameAlert) {
+            TextField("プリセット名", text: $presetName)
+            Button("保存") {
+                let name = presetName.trimmingCharacters(in: .whitespacesAndNewlines)
+                let fallback = "マイプリセット \(presetStore.presets.count + 1)"
+                presetStore.add(viewModel.makePreset(named: name.isEmpty ? fallback : name))
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("現在のレイアウト・比率・余白・間隔・色を保存し、ホームから呼び出せます")
+        }
+        .onDisappear {
+            viewModel.persistSessionMetadata()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background || phase == .inactive {
+                viewModel.persistSessionMetadata()
             }
         }
         .overlay {

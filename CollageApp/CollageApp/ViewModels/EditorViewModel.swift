@@ -75,6 +75,13 @@ final class EditorViewModel {
         undoStack.removeAll()
         redoStack.removeAll()
         saveState = .idle
+
+        // 状態復元用に写真データとメタデータを保存（Phase 3）
+        let datas = loaded.map(\.originalData)
+        Task.detached(priority: .utility) {
+            SessionStore.savePhotoDatas(datas)
+        }
+        persistSessionMetadata()
     }
 
     /// CGImageSource でフルデコードせずにダウンサンプルする（メモリ対策、仕様 3.2）。
@@ -110,6 +117,63 @@ final class EditorViewModel {
         } catch {
             saveState = .failed(error.localizedDescription)
         }
+    }
+
+    // MARK: - プリセット（Phase 3）
+
+    /// プリセットの設定・レイアウトを現在の編集に適用する（写真・変形状態は保持）。
+    func apply(preset: Preset) {
+        registerUndoSnapshot()
+        spec = preset.spec
+        if let index = layouts.firstIndex(of: preset.layout) {
+            layoutIndex = index
+        }
+    }
+
+    /// 現在の設定からプリセットを作る。
+    func makePreset(named name: String) -> Preset {
+        Preset(name: name, layout: currentLayout ?? .verticalStack, spec: spec)
+    }
+
+    // MARK: - 編集状態の保存・復元（Phase 3）
+
+    /// 設定・変形のメタデータを保存する（エディタ離脱時・バックグラウンド移行時に呼ぶ）。
+    /// 写真データ本体は loadPhotos 時に保存済み。
+    func persistSessionMetadata() {
+        guard !photos.isEmpty else { return }
+        SessionStore.saveMetadata(SessionStore.Snapshot(
+            spec: spec,
+            layoutIndex: layoutIndex,
+            transforms: orderedTransforms,
+            photoCount: photos.count
+        ))
+    }
+
+    /// 保存済みセッションから編集状態を復元する。
+    func restoreSessionFromDisk() async -> Bool {
+        isLoading = true
+        defer { isLoading = false }
+        let loadedSession = await Task.detached(priority: .userInitiated) {
+            SessionStore.load()
+        }.value
+        guard let session = loadedSession else { return false }
+        var loaded: [Photo] = []
+        for data in session.photoDatas {
+            guard let image = Self.downsample(data: data, maxPixelSize: 2048) else { continue }
+            loaded.append(Photo(image: image, originalData: data))
+        }
+        guard loaded.count == session.snapshot.photoCount else { return false }
+        photos = loaded
+        spec = session.snapshot.spec
+        layoutIndex = session.snapshot.layoutIndex
+        transforms = Dictionary(uniqueKeysWithValues: zip(
+            loaded.map(\.id),
+            session.snapshot.transforms
+        ))
+        undoStack.removeAll()
+        redoStack.removeAll()
+        saveState = .idle
+        return true
     }
 
     // MARK: - Undo / Redo（仕様 2.2: 最初から入れる）
