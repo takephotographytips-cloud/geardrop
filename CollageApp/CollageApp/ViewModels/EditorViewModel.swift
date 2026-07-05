@@ -34,6 +34,10 @@ final class EditorViewModel {
     private(set) var isLoading = false
     var saveState: SaveState = .idle
 
+    /// セルごとの写真変形状態（写真 ID キー）。
+    /// レイアウトを変更してもズーム率・位置を維持できるよう、セル位置ではなく写真に紐付ける。
+    var transforms: [UUID: CellTransform] = [:]
+
     /// 選択枚数に応じたレイアウト候補
     var layouts: [CollageLayout] {
         CollageLayout.candidates(for: photos.count)
@@ -45,8 +49,9 @@ final class EditorViewModel {
         return layouts[layoutIndex]
     }
 
-    var aspectRatios: [CGFloat] {
-        photos.map(\.aspectRatio)
+    /// 表示順に並べた変形状態（レンダラへ渡す用）
+    var orderedTransforms: [CellTransform] {
+        photos.map { transforms[$0.id] ?? CellTransform() }
     }
 
     // MARK: - 写真読み込み
@@ -64,6 +69,7 @@ final class EditorViewModel {
         }
         photos = loaded
         layoutIndex = 0
+        transforms = [:]
         undoStack.removeAll()
         redoStack.removeAll()
         saveState = .idle
@@ -94,6 +100,7 @@ final class EditorViewModel {
         do {
             try await ExportRenderer.export(
                 images: photos.map(\.image),
+                transforms: orderedTransforms,
                 layout: layout,
                 spec: spec
             )
@@ -108,6 +115,7 @@ final class EditorViewModel {
     private struct Snapshot: Equatable {
         var spec: CanvasSpec
         var layoutIndex: Int
+        var transforms: [UUID: CellTransform]
     }
 
     private var undoStack: [Snapshot] = []
@@ -116,9 +124,9 @@ final class EditorViewModel {
     var canUndo: Bool { !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
 
-    /// 設定を変更する直前に呼ぶ（スライダーはドラッグ開始時に1回）。
+    /// 設定・写真を変更する直前に呼ぶ（スライダー・ジェスチャーは開始時に1回）。
     func registerUndoSnapshot() {
-        let snapshot = Snapshot(spec: spec, layoutIndex: layoutIndex)
+        let snapshot = currentSnapshot()
         if undoStack.last != snapshot {
             undoStack.append(snapshot)
             redoStack.removeAll()
@@ -127,18 +135,23 @@ final class EditorViewModel {
 
     func undo() {
         guard let snapshot = undoStack.popLast() else { return }
-        redoStack.append(Snapshot(spec: spec, layoutIndex: layoutIndex))
+        redoStack.append(currentSnapshot())
         apply(snapshot)
     }
 
     func redo() {
         guard let snapshot = redoStack.popLast() else { return }
-        undoStack.append(Snapshot(spec: spec, layoutIndex: layoutIndex))
+        undoStack.append(currentSnapshot())
         apply(snapshot)
+    }
+
+    private func currentSnapshot() -> Snapshot {
+        Snapshot(spec: spec, layoutIndex: layoutIndex, transforms: transforms)
     }
 
     private func apply(_ snapshot: Snapshot) {
         spec = snapshot.spec
         layoutIndex = snapshot.layoutIndex
+        transforms = snapshot.transforms
     }
 }

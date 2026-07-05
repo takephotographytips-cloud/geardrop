@@ -1,14 +1,27 @@
 import SwiftUI
 
-/// 画面B: エディタ（仕様 2.2）。
-/// 上部: プレビュー（レイアウトカルーセルと一体）/ 下部: 調整パネル / 右上: 保存。
+/// 画面B: エディタ（仕様 2.2 / v1.1 変更）。
+/// 上部: プレビュー（セル内の写真をドラッグ・ピンチで直接編集）/
+/// 中部: レイアウト切替（縦並び・横並び）/ 下部: 調整パネル / 右上: 保存。
 /// タップ3: 保存ボタンでフォトライブラリへ書き出して完了。
 struct EditorView: View {
     @Bindable var viewModel: EditorViewModel
 
     var body: some View {
-        VStack(spacing: 0) {
-            LayoutCarousel(viewModel: viewModel)
+        VStack(spacing: 16) {
+            CollageCanvasView(viewModel: viewModel)
+                .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .frame(maxHeight: .infinity)
+
+            Picker("レイアウト", selection: layoutSelection) {
+                ForEach(Array(viewModel.layouts.enumerated()), id: \.offset) { index, layout in
+                    Text(layout.displayName).tag(index)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
 
             AdjustPanel(viewModel: viewModel)
                 .padding(.horizontal)
@@ -52,6 +65,18 @@ struct EditorView: View {
                 }
             }
         )
+    }
+
+    /// レイアウト切替。写真データと各セルの変形状態は維持される
+    /// （オフセットは正規化保持のため、新しいセルサイズで再クランプされる）。
+    private var layoutSelection: Binding<Int> {
+        Binding {
+            viewModel.layoutIndex
+        } set: { newValue in
+            guard newValue != viewModel.layoutIndex else { return }
+            viewModel.registerUndoSnapshot()
+            viewModel.layoutIndex = newValue
+        }
     }
 
     private var saveButton: some View {

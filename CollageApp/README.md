@@ -5,16 +5,25 @@
 
 ## 実装状況
 
-### Phase 1: コア体験 ✅(このコミット)
+### Phase 1: コア体験 ✅
 - [x] タップ1: 起動直後に PhotosPicker が自動で開く。2〜6枚選択(選んだ順=配置順、`selectionBehavior: .ordered`)
-- [x] タップ2: 選択と同時にレイアウト自動生成 → プレビュー。横スワイプで候補切替(ページドット表示)
+- [x] タップ2: 選択と同時にレイアウト自動生成 → プレビュー
 - [x] タップ3: 保存 → フォトライブラリへ書き出し(Phase 1 はプレビュー解像度 長辺2048px)
-- [x] レイアウト6種(縦積み / 横並び / 大小 / 1大+2小 / 2×2 / 1大+3小 / グリッド)
 - [x] 比率5種(1:1 / 4:5 / 3:2 / 9:16 / 4:3)
 - [x] 余白スライダー(0〜15%)+ 背景色 白/黒/オフホワイト #F5F2ED
-- [x] 写真はトリミングなし(アスペクトフィットのみ)。縦積みは幅を揃え高さは写真比率に従う
-- [x] Undo/Redo(調整操作のスナップショット)
-- [x] `CollageLayout` のユニットテスト(比率4:5・余白5%・2枚縦積みのセル矩形検証を含む)
+- [x] Undo/Redo(調整・写真操作のスナップショット)
+
+### 仕様変更 v1.1: Instagram / Canva 型編集 ✅(このコミット)
+- [x] レイアウトは縦並び / 横並びの2パターン(セグメント切替)。セルは枚数で**均等分割**
+  - 縦並び: セル高さ = (利用可能高さ − ガター合計) ÷ 枚数、幅共通
+  - 横並び: セル幅 = (利用可能幅 − ガター合計) ÷ 枚数、高さ共通
+- [x] 写真はセルいっぱいに表示(BoxFit.cover 相当)。枠からはみ出た部分はクリップ
+- [x] 枠は固定、写真だけをドラッグ移動・ピンチ拡大縮小(セルごとに完全独立)
+- [x] 変形状態は `CellTransform`(scale / offset / rotation※将来用)としてセルごとに保持
+  - offset はセル寸法で正規化 → レイアウト変更後もズーム率・位置を可能な限り維持
+  - 「背景が見えない」範囲へ自動クランプ(scale 下限 = カバー状態)
+- [x] プレビューと書き出しは同じ `CellGeometry` を通り、見た目が一致
+- [x] `CollageLayout`(均等分割)+ `CellGeometry`(カバー+変形)のユニットテスト
 
 ### Phase 2〜4(未実装)
 - ExportRenderer のフル解像度化(16bit 合成・Display P3・EXIF 保持)
@@ -51,14 +60,15 @@ GitHub Actions の `iOS Build & Test` ワークフロー(手動実行)でも同�
 CollageApp/
 ├── App/CollageApp.swift            エントリポイント
 ├── Models/
-│   ├── CollageLayout.swift         レイアウト定義(enum + セル矩形計算)
+│   ├── CollageLayout.swift         レイアウト定義(縦/横の均等分割セル計算)
+│   ├── CellTransform.swift         セル内変形状態 + カバーフィット矩形計算(CellGeometry)
 │   ├── CanvasSpec.swift            比率・余白・ガター・背景色
 │   └── Preset.swift                Codable プリセット
-├── ViewModels/EditorViewModel.swift  @Observable。Undo/Redo スタック含む
+├── ViewModels/EditorViewModel.swift  @Observable。セル変形・Undo/Redo スタック含む
 ├── Views/
 │   ├── HomeView.swift              画面A: ホーム
-│   ├── EditorView.swift            画面B: エディタ
-│   ├── LayoutCarousel.swift        レイアウト候補カルーセル+キャンバス描画
+│   ├── EditorView.swift            画面B: エディタ(レイアウト切替セグメント)
+│   ├── CollageCanvas.swift         キャンバス+セル(ドラッグ/ピンチのジェスチャー処理)
 │   └── AdjustPanel.swift           余白・色・比率の調整パネル
 ├── Rendering/
 │   ├── CollageRenderer.swift       プレビュー解像度の合成

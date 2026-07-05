@@ -21,6 +21,7 @@ enum ExportRenderer {
     /// 合成してフォトライブラリに追加する（追加のみの権限を要求、全権限は要求しない）。
     static func export(
         images: [UIImage],
+        transforms: [CellTransform],
         layout: CollageLayout,
         spec: CanvasSpec,
         longSide: CGFloat = 2048
@@ -32,6 +33,7 @@ enum ExportRenderer {
 
         let rendered = CollageRenderer.render(
             images: images,
+            transforms: transforms,
             layout: layout,
             spec: spec,
             longSide: longSide
