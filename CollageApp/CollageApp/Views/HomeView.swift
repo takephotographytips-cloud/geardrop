@@ -12,7 +12,6 @@ struct HomeView: View {
     @State private var isPickerPresented = false
     @State private var showEditor = false
     @State private var showSettings = false
-    @State private var showPackStore = false
     @State private var didAutoPresentPicker = false
     @State private var pendingPreset: Preset?
     @State private var hasStoredSession = false
@@ -62,10 +61,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView()
-            }
-            .sheet(isPresented: $showPackStore) {
-                PackStoreView(store: presetStore)
+                SettingsView(store: presetStore)
             }
             .navigationDestination(isPresented: $showEditor) {
                 EditorView(viewModel: viewModel, presetStore: presetStore)
@@ -102,34 +98,18 @@ struct HomeView: View {
 
     // MARK: - プリセット一覧
 
-    /// ユーザー保存プリセット + 購入済みパックのプリセット
-    private var allPresets: [Preset] {
-        presetStore.presets + presetStore.unlockedPackPresets
-    }
-
     private var presetSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("プリセット")
-                    .font(.headline)
-                Spacer()
-                if !presetStore.allPacksUnlocked {
-                    Button {
-                        showPackStore = true
-                    } label: {
-                        Label("パックを入手", systemImage: "sparkles")
-                            .font(.subheadline)
-                    }
-                }
-            }
-            if allPresets.isEmpty {
+            Text("プリセット")
+                .font(.headline)
+            if presetStore.presets.isEmpty {
                 Text("エディタ右上のしおりボタンで、現在の設定をプリセットとして保存できます")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(allPresets) { preset in
+                        ForEach(presetStore.presets) { preset in
                             presetChip(preset)
                         }
                     }
@@ -156,10 +136,8 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-            if presetStore.isUserPreset(preset) {
-                Button("削除", role: .destructive) {
-                    presetStore.remove(preset)
-                }
+            Button("削除", role: .destructive) {
+                presetStore.remove(preset)
             }
         }
     }

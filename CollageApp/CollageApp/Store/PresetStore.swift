@@ -2,12 +2,16 @@ import Foundation
 import Observation
 import StoreKit
 
-/// プリセットの永続化（JSON、仕様 3.1）と StoreKit 2 によるプリセットパック課金。
-/// - ユーザー保存プリセット: Documents/presets.json
-/// - パック: 非消耗型 IAP。購入状態は Transaction.currentEntitlements から復元
+/// プリセットの永続化（JSON、仕様 3.1）と StoreKit 2 による「Stack Pro」課金。
+/// - ユーザー保存プリセット: Documents/presets.json（無料は3つまで、Pro で無制限）
+/// - Stack Pro: 非消耗型 IAP（¥980 買い切り）。プリセット無制限＋デザインフレームを解放
 @Observable
 @MainActor
 final class PresetStore {
+
+    static let proProductID = "com.dstudio.collageapp.pro"
+    /// 無料版で保存できるプリセット数
+    static let freePresetLimit = 3
 
     enum StoreError: LocalizedError {
         case productUnavailable
@@ -21,10 +25,10 @@ final class PresetStore {
 
     /// ユーザーが保存したプリセット
     private(set) var presets: [Preset] = []
-    /// 読み込み済みの App Store 商品（productID キー）
-    private(set) var products: [String: Product] = [:]
-    /// 購入済みパックの productID
-    private(set) var purchasedPackIDs: Set<String> = []
+    /// Stack Pro の App Store 商品
+    private(set) var proProduct: Product?
+    /// 購入済み productID
+    private(set) var purchasedProductIDs: Set<String> = []
 
     private let fileURL: URL
     private var transactionListener: Task<Void, Never>?
@@ -42,6 +46,26 @@ final class PresetStore {
         Task { await self.refreshStore() }
     }
 
+    // MARK: - Pro 判定
+
+    var isPro: Bool {
+        purchasedProductIDs.contains(Self.proProductID)
+    }
+
+    /// プリセットをこれ以上保存できるか（無料3つ制限）
+    var canAddPreset: Bool {
+        Self.canAddPreset(currentCount: presets.count, isPro: isPro)
+    }
+
+    static func canAddPreset(currentCount: Int, isPro: Bool) -> Bool {
+        isPro || currentCount < freePresetLimit
+    }
+
+    /// 表示価格。商品未取得時はプレースホルダ
+    var displayPrice: String {
+        proProduct?.displayPrice ?? "¥980"
+    }
+
     // MARK: - ユーザープリセット
 
     func add(_ preset: Preset) {
@@ -54,11 +78,6 @@ final class PresetStore {
         savePresets()
     }
 
-    /// ユーザー自身が保存したプリセットか（削除メニューの出し分けに使用）
-    func isUserPreset(_ preset: Preset) -> Bool {
-        presets.contains { $0.id == preset.id }
-    }
-
     private func loadPresets() {
         guard let data = try? Data(contentsOf: fileURL) else { return }
         presets = (try? JSONDecoder().decode([Preset].self, from: data)) ?? []
@@ -69,31 +88,11 @@ final class PresetStore {
         try? data.write(to: fileURL, options: .atomic)
     }
 
-    // MARK: - プリセットパック（StoreKit 2）
-
-    var packs: [PresetPack] { PresetPack.all }
-
-    func isUnlocked(_ pack: PresetPack) -> Bool {
-        purchasedPackIDs.contains(pack.productID)
-    }
-
-    var allPacksUnlocked: Bool {
-        PresetPack.all.allSatisfy(isUnlocked)
-    }
-
-    /// 購入済みパックのプリセット（ホームの一覧に合流させる）
-    var unlockedPackPresets: [Preset] {
-        PresetPack.all.filter(isUnlocked).flatMap(\.presets)
-    }
-
-    /// 表示価格。商品未取得時はプレースホルダ
-    func displayPrice(for pack: PresetPack) -> String {
-        products[pack.productID]?.displayPrice ?? "¥480"
-    }
+    // MARK: - StoreKit 2
 
     func refreshStore() async {
-        if let loaded = try? await Product.products(for: PresetPack.all.map(\.productID)) {
-            products = Dictionary(uniqueKeysWithValues: loaded.map { ($0.id, $0) })
+        if let loaded = try? await Product.products(for: [Self.proProductID]) {
+            proProduct = loaded.first
         }
         await refreshEntitlements()
     }
@@ -105,22 +104,19 @@ final class PresetStore {
                 purchased.insert(transaction.productID)
             }
         }
-        purchasedPackIDs = purchased
+        purchasedProductIDs = purchased
     }
 
-    func purchase(_ pack: PresetPack) async throws {
-        guard let product = products[pack.productID] else {
-            // 商品未取得なら一度だけ再取得を試みる
+    func purchasePro() async throws {
+        if proProduct == nil {
             await refreshStore()
-            guard products[pack.productID] != nil else { throw StoreError.productUnavailable }
-            try await purchase(pack)
-            return
         }
+        guard let product = proProduct else { throw StoreError.productUnavailable }
         let result = try await product.purchase()
         switch result {
         case .success(let verification):
             if case .verified(let transaction) = verification {
-                purchasedPackIDs.insert(transaction.productID)
+                purchasedProductIDs.insert(transaction.productID)
                 await transaction.finish()
             }
         case .userCancelled, .pending:
@@ -138,9 +134,9 @@ final class PresetStore {
     private func handle(transactionResult: VerificationResult<StoreKit.Transaction>) async {
         guard case .verified(let transaction) = transactionResult else { return }
         if transaction.revocationDate == nil {
-            purchasedPackIDs.insert(transaction.productID)
+            purchasedProductIDs.insert(transaction.productID)
         } else {
-            purchasedPackIDs.remove(transaction.productID)
+            purchasedProductIDs.remove(transaction.productID)
         }
         await transaction.finish()
     }

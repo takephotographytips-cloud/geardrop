@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// 調整パネル（仕様 2.2: 引き算思想の3項目）。
-/// 1. 余白: スライダー + 色（プリセット3色 + カラーピッカー※スポイト内蔵）
-/// 2. 比率: セグメント切替
-/// 3. 間隔: 写真同士のガター幅スライダー
+/// 調整パネル（仕様 2.2: 引き算思想）。
+/// 余白 / 間隔 / 色（プリセット3色 + カラーピッカー※スポイト内蔵）/ 比率 / フレーム（Pro）
 struct AdjustPanel: View {
     @Bindable var viewModel: EditorViewModel
+    let store: PresetStore
+    /// ロック中のフレームをタップしたときに呼ばれる（ペイウォール表示）
+    var onRequestPro: () -> Void
 
     private let presetColors: [(color: CanvasColor, name: String)] = [
         (.white, "白"),
@@ -74,7 +75,53 @@ struct AdjustPanel: View {
                 }
                 .pickerStyle(.segmented)
             }
+
+            // フレーム: なしは無料、デザインフレームは Stack Pro
+            HStack(spacing: 12) {
+                Text("フレーム")
+                    .font(.subheadline)
+                    .frame(width: 44, alignment: .leading)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(FrameStyle.allCases) { style in
+                            frameChip(style)
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    private func frameChip(_ style: FrameStyle) -> some View {
+        let isSelected = viewModel.spec.frame == style
+        let isLocked = style.isPro && !store.isPro
+        return Button {
+            if isLocked {
+                onRequestPro()
+                return
+            }
+            guard !isSelected else { return }
+            viewModel.registerUndoSnapshot()
+            viewModel.spec.frame = style
+        } label: {
+            HStack(spacing: 4) {
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.caption2)
+                }
+                Text(style.displayName)
+                    .font(.subheadline)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(.quaternary, in: Capsule())
+            .overlay {
+                if isSelected {
+                    Capsule().strokeBorder(.tint, lineWidth: 2)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private func sliderRow(

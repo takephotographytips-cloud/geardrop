@@ -46,18 +46,45 @@ struct CanvasColor: Codable, Equatable {
     static let offWhite = CanvasColor(red: 0xF5 / 255.0, green: 0xF2 / 255.0, blue: 0xED / 255.0)
 }
 
-/// キャンバス設定（比率・余白・ガター・背景色）。
+/// キャンバス設定（比率・余白・ガター・背景色・フレーム）。
 /// 余白とガターはキャンバス短辺に対する割合で保持し、解像度非依存にする。
 struct CanvasSpec: Codable, Equatable {
     /// 出力比率
-    var ratio: CanvasRatio = .fourFive
+    var ratio: CanvasRatio
     /// 外周余白（短辺比 0〜0.15）
-    var marginFraction: CGFloat = 0.05
+    var marginFraction: CGFloat
     /// 写真同士の間隔（短辺比 0〜0.10）
-    var gutterFraction: CGFloat = 0.02
-    /// 背景色
-    var background: CanvasColor = .offWhite
+    var gutterFraction: CGFloat
+    /// 背景色（フレームが backgroundOverride を持つ場合はそちらが優先）
+    var background: CanvasColor
+    /// デザインフレーム（Stack Pro）
+    var frame: FrameStyle
 
     static let marginRange: ClosedRange<CGFloat> = 0.0...0.15
     static let gutterRange: ClosedRange<CGFloat> = 0.0...0.10
+
+    init(
+        ratio: CanvasRatio = .fourFive,
+        marginFraction: CGFloat = 0.05,
+        gutterFraction: CGFloat = 0.02,
+        background: CanvasColor = .offWhite,
+        frame: FrameStyle = .none
+    ) {
+        self.ratio = ratio
+        self.marginFraction = marginFraction
+        self.gutterFraction = gutterFraction
+        self.background = background
+        self.frame = frame
+    }
+
+    /// 旧バージョンで保存されたプリセット・セッション（frame キーなし）も読めるよう、
+    /// 欠けているキーはデフォルト値で補う。
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        ratio = try container.decodeIfPresent(CanvasRatio.self, forKey: .ratio) ?? .fourFive
+        marginFraction = try container.decodeIfPresent(CGFloat.self, forKey: .marginFraction) ?? 0.05
+        gutterFraction = try container.decodeIfPresent(CGFloat.self, forKey: .gutterFraction) ?? 0.02
+        background = try container.decodeIfPresent(CanvasColor.self, forKey: .background) ?? .offWhite
+        frame = try container.decodeIfPresent(FrameStyle.self, forKey: .frame) ?? .none
+    }
 }

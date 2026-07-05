@@ -43,8 +43,16 @@ enum CollageLayout: String, CaseIterable, Identifiable, Codable {
         let shortSide = min(canvasSize.width, canvasSize.height)
         let margin = spec.marginFraction * shortSide
         let gutter = spec.gutterFraction * shortSide
-        let content = CGRect(origin: .zero, size: canvasSize)
+        var content = CGRect(origin: .zero, size: canvasSize)
             .insetBy(dx: margin, dy: margin)
+        // デザインフレームの帯ぶんをさらに内側へ
+        let band = spec.frame.bandInsets(layout: self, shortSide: shortSide)
+        content = CGRect(
+            x: content.minX + band.leading,
+            y: content.minY + band.top,
+            width: content.width - band.leading - band.trailing,
+            height: content.height - band.top - band.bottom
+        )
         guard count > 0, content.width > 0, content.height > 0 else { return [] }
 
         let guttersTotal = gutter * CGFloat(count - 1)

@@ -5,48 +5,18 @@
   ],
   "products" : [
     {
-      "displayPrice" : "480",
+      "displayPrice" : "980",
       "familyShareable" : false,
-      "internalID" : "8F1D2C3B-0000-4000-8000-000000000011",
+      "internalID" : "8F1D2C3B-0000-4000-8000-000000000021",
       "localizations" : [
         {
-          "description" : "写真展のような広い余白と端正な並びのプリセット4種",
-          "displayName" : "Gallery Pack",
+          "description" : "プリセット無制限とデザインフレームを解放する買い切りアップグレード",
+          "displayName" : "Stack Pro",
           "locale" : "ja_JP"
         }
       ],
-      "productID" : "com.dstudio.collageapp.pack.gallery",
-      "referenceName" : "Gallery Pack",
-      "type" : "NonConsumable"
-    },
-    {
-      "displayPrice" : "480",
-      "familyShareable" : false,
-      "internalID" : "8F1D2C3B-0000-4000-8000-000000000012",
-      "localizations" : [
-        {
-          "description" : "暗室のような黒基調のフィルムルック4種",
-          "displayName" : "Film Pack",
-          "locale" : "ja_JP"
-        }
-      ],
-      "productID" : "com.dstudio.collageapp.pack.film",
-      "referenceName" : "Film Pack",
-      "type" : "NonConsumable"
-    },
-    {
-      "displayPrice" : "480",
-      "familyShareable" : false,
-      "internalID" : "8F1D2C3B-0000-4000-8000-000000000013",
-      "localizations" : [
-        {
-          "description" : "雑誌の誌面のようなタイトな組みのプリセット4種",
-          "displayName" : "Editorial Pack",
-          "locale" : "ja_JP"
-        }
-      ],
-      "productID" : "com.dstudio.collageapp.pack.editorial",
-      "referenceName" : "Editorial Pack",
+      "productID" : "com.dstudio.collageapp.pro",
+      "referenceName" : "Stack Pro",
       "type" : "NonConsumable"
     }
   ],

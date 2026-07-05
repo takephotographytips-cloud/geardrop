@@ -38,22 +38,33 @@
 - [x] 設定画面(ホームのギアアイコン: 書き出し形式・EXIF 保持のみの最小構成)
 - [x] 出力解像度計算のユニットテスト
 
-### Phase 3: プリセット+課金 ✅(このコミット)
+### Phase 3: プリセット+課金 ✅
 - [x] プリセット保存/呼び出し
-  - エディタ右上のしおりボタンで現在の設定(レイアウト・比率・余白・間隔・色)を名前付き保存
+  - エディタ右上のしおりボタンで現在の設定(レイアウト・比率・余白・間隔・色・フレーム)を名前付き保存
   - ホーム下部に一覧表示 → タップでプリセット適用済みの状態で写真選択へ(Inset レビュー要望の先回り)
-  - 長押しで削除(ユーザー保存分のみ)
-- [x] StoreKit 2 プリセットパック3種(非消耗型・各¥480、サブスクなし)
-  - Gallery / Film / Editorial 各4プリセット(アプリ内蔵、購入でホームに合流)
-  - 購入復元(`AppStore.sync`)、`Transaction.updates` 常駐リスナー、検証済みトランザクションのみ反映
-  - `Products.storekit`(ローカルテスト用 StoreKit Configuration)を同梱、スキームに紐付け済み
+  - 長押しで削除
 - [x] 編集途中の状態復元(アプリ再起動時)
   - 写真の元データ+設定・変形を Application Support に保存
   - ホームに「前回の編集を再開」ボタン(セッションがあるときは起動時の自動ピッカーを抑制)
 
+### 課金モデル v2: Stack Pro ✅(このコミット)
+単一の買い切り「**Stack Pro**」¥980(非消耗型、productID: `com.dstudio.collageapp.pro`)。
+基本ツールで再現できる設定集ではなく、機能そのものを価値にする。
+
+- [x] **プリセット無制限** — 無料版は3つまで保存可、4つ目からペイウォール表示
+- [x] **デザインフレーム3種** — 画像アセットなしのプログラム描画(軽量・解像度非依存)
+  - フィルム: 黒地+パーフォレーション+「STACK 400」銘柄・コマ番号
+  - シネマ: 黒地+映画フィルムの大きな送り穴
+  - プリント: 紙白地+トンボ・ラベル
+  - フレームはレイアウトのセル計算に統合(帯ぶん内側へ)。プレビューと書き出しは同じ FrameElement を描画
+- [x] Inset 風ペイウォール(ヒーロー+機能リスト+Lifetime 価格カード+復元)
+- [x] 設定画面に Pro 導線(アップグレード・購入を復元・バージョン表記)
+- [x] `Products.storekit` はローカルテスト用に Stack Pro 1商品(¥980)
+- [x] 旧保存データとの後方互換(frame キーのないプリセット/セッションもデコード可)
+
 ### Phase 4(未実装)
 - アプリアイコン・App Store スクリーンショット
-- App Store Connect での IAP 商品登録(productID は `com.dstudio.collageapp.pack.*`)
+- App Store Connect での IAP 商品登録(productID: `com.dstudio.collageapp.pro`)
 - プライバシー: データ収集ゼロで申告
 
 ## 要件
@@ -87,6 +98,7 @@ CollageApp/
 ├── Models/
 │   ├── CollageLayout.swift         レイアウト定義(縦/横の均等分割セル計算)
 │   ├── CellTransform.swift         セル内変形状態 + カバーフィット矩形計算(CellGeometry)
+│   ├── FrameStyle.swift            デザインフレーム(帯・装飾要素のジオメトリ生成)
 │   ├── CanvasSpec.swift            比率・余白・ガター・背景色
 │   └── Preset.swift                Codable プリセット
 ├── ViewModels/EditorViewModel.swift  @Observable。セル変形・Undo/Redo スタック含む
@@ -95,7 +107,7 @@ CollageApp/
 │   ├── EditorView.swift            画面B: エディタ(レイアウト切替セグメント)
 │   ├── CollageCanvas.swift         キャンバス+セル(ドラッグ/ピンチのジェスチャー処理)
 │   ├── AdjustPanel.swift           余白・間隔・色・比率の調整パネル
-│   ├── PackStoreView.swift         プリセットパック購入画面
+│   ├── ProPaywallView.swift        Stack Pro ペイウォール(¥980 買い切り)
 │   └── SettingsView.swift          設定(書き出し形式・EXIF 保持)
 ├── Rendering/
 │   ├── CollageRenderer.swift       プレビュー解像度の合成(プリセットサムネイル等に使用予定)

@@ -21,13 +21,14 @@ struct CollageCanvasView: View {
     var body: some View {
         GeometryReader { geometry in
             let layout = viewModel.currentLayout ?? .verticalStack
+            let spec = viewModel.spec
             let cells = layout.cellRects(
                 canvasSize: geometry.size,
-                spec: viewModel.spec,
+                spec: spec,
                 count: viewModel.photos.count
             )
             ZStack {
-                viewModel.spec.background.color
+                (spec.frame.backgroundOverride ?? spec.background).color
                 ForEach(Array(viewModel.photos.enumerated()), id: \.element.id) { index, photo in
                     if cells.indices.contains(index) {
                         let cell = cells[index]
@@ -41,6 +42,15 @@ struct CollageCanvasView: View {
                         .position(x: cell.midX, y: cell.midY)
                     }
                 }
+                if spec.frame != .none {
+                    FrameDecorationCanvas(elements: spec.frame.decorationElements(
+                        canvasSize: geometry.size,
+                        spec: spec,
+                        layout: layout,
+                        cells: cells
+                    ))
+                    .allowsHitTesting(false)
+                }
             }
         }
         .aspectRatio(viewModel.spec.ratio.value, contentMode: .fit)
@@ -52,6 +62,37 @@ struct CollageCanvasView: View {
             viewModel.transforms[id] ?? CellTransform()
         } set: { newValue in
             viewModel.transforms[id] = newValue
+        }
+    }
+}
+
+/// フレーム装飾（穴・文字）のプレビュー描画。
+/// 書き出し側（FrameElementRenderer）と同じ FrameElement を描くため見た目が一致する。
+struct FrameDecorationCanvas: View {
+    let elements: [FrameElement]
+
+    var body: some View {
+        Canvas { context, _ in
+            for element in elements {
+                switch element {
+                case .roundedRect(let rect, let cornerRadius, let color):
+                    context.fill(
+                        Path(roundedRect: rect, cornerRadius: cornerRadius),
+                        with: .color(color.color)
+                    )
+                case .text(let string, let center, let height, let rotationDegrees, let color):
+                    var rotated = context
+                    rotated.translateBy(x: center.x, y: center.y)
+                    rotated.rotate(by: .degrees(rotationDegrees))
+                    rotated.draw(
+                        Text(string)
+                            .font(.system(size: height, weight: .semibold, design: .monospaced))
+                            .foregroundColor(color.color),
+                        at: .zero,
+                        anchor: .center
+                    )
+                }
+            }
         }
     }
 }

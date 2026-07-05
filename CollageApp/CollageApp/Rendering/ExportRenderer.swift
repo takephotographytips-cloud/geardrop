@@ -141,8 +141,8 @@ enum ExportRenderer {
         guard let context = contextOrNil else { throw ExportError.renderingFailed }
         context.interpolationQuality = .high
 
-        // 背景
-        let background = spec.background
+        // 背景（デザインフレームは専用の背景色を持つ）
+        let background = spec.frame.backgroundOverride ?? spec.background
         context.setFillColor(CGColor(
             srgbRed: background.red,
             green: background.green,
@@ -187,6 +187,17 @@ enum ExportRenderer {
                 context.restoreGState()
             }
         }
+
+        // フレーム装飾（コンテキストは左上原点に反転済みなので UIKit 描画がそのまま使える）
+        FrameElementRenderer.draw(
+            spec.frame.decorationElements(
+                canvasSize: CGSize(width: CGFloat(width), height: CGFloat(height)),
+                spec: spec,
+                layout: layout,
+                cells: cells
+            ),
+            in: context
+        )
 
         guard let outputImage = context.makeImage() else { throw ExportError.renderingFailed }
         return try encode(outputImage, options: options, firstSource: sources.first)

@@ -11,6 +11,7 @@ struct EditorView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showPresetNameAlert = false
     @State private var presetName = ""
+    @State private var showPaywall = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -31,9 +32,11 @@ struct EditorView: View {
                 .padding(.horizontal)
             }
 
-            AdjustPanel(viewModel: viewModel)
-                .padding(.horizontal)
-                .padding(.bottom)
+            AdjustPanel(viewModel: viewModel, store: presetStore) {
+                showPaywall = true
+            }
+            .padding(.horizontal)
+            .padding(.bottom)
         }
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
@@ -56,8 +59,13 @@ struct EditorView: View {
 
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
-                    presetName = ""
-                    showPresetNameAlert = true
+                    // 無料版は3つまで。超える場合はペイウォールへ（Stack Pro で無制限）
+                    if presetStore.canAddPreset {
+                        presetName = ""
+                        showPresetNameAlert = true
+                    } else {
+                        showPaywall = true
+                    }
                 } label: {
                     Image(systemName: "bookmark")
                 }
@@ -76,6 +84,9 @@ struct EditorView: View {
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text("現在のレイアウト・比率・余白・間隔・色を保存し、ホームから呼び出せます")
+        }
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView(store: presetStore)
         }
         .onDisappear {
             viewModel.persistSessionMetadata()
