@@ -189,13 +189,19 @@ enum ExportRenderer {
         }
 
         // フレーム装飾（コンテキストは左上原点に反転済みなので UIKit 描画がそのまま使える）
+        let renderCanvasSize = CGSize(width: CGFloat(width), height: CGFloat(height))
         FrameElementRenderer.draw(
             spec.frame.decorationElements(
-                canvasSize: CGSize(width: CGFloat(width), height: CGFloat(height)),
+                canvasSize: renderCanvasSize,
                 spec: spec,
                 layout: layout,
                 cells: cells
             ),
+            in: context
+        )
+        FrameElementRenderer.drawGrain(
+            alpha: spec.frame.grainAlpha,
+            canvasSize: renderCanvasSize,
             in: context
         )
 

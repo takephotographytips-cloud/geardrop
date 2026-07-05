@@ -43,12 +43,15 @@ struct CollageCanvasView: View {
                     }
                 }
                 if spec.frame != .none {
-                    FrameDecorationCanvas(elements: spec.frame.decorationElements(
-                        canvasSize: geometry.size,
-                        spec: spec,
-                        layout: layout,
-                        cells: cells
-                    ))
+                    FrameDecorationCanvas(
+                        elements: spec.frame.decorationElements(
+                            canvasSize: geometry.size,
+                            spec: spec,
+                            layout: layout,
+                            cells: cells
+                        ),
+                        grainAlpha: spec.frame.grainAlpha
+                    )
                     .allowsHitTesting(false)
                 }
             }
@@ -66,13 +69,14 @@ struct CollageCanvasView: View {
     }
 }
 
-/// フレーム装飾（穴・文字）のプレビュー描画。
-/// 書き出し側（FrameElementRenderer）と同じ FrameElement を描くため見た目が一致する。
+/// フレーム装飾（穴・文字・グレイン）のプレビュー描画。
+/// 書き出し側（FrameElementRenderer）と同じ FrameElement・ノイズテクスチャを描くため見た目が一致する。
 struct FrameDecorationCanvas: View {
     let elements: [FrameElement]
+    var grainAlpha: CGFloat = 0
 
     var body: some View {
-        Canvas { context, _ in
+        Canvas { context, size in
             for element in elements {
                 switch element {
                 case .roundedRect(let rect, let cornerRadius, let color):
@@ -91,6 +95,24 @@ struct FrameDecorationCanvas: View {
                         at: .zero,
                         anchor: .center
                     )
+                }
+            }
+
+            // グレイン: 書き出しと同じく短辺の 1/8 をタイルサイズにする
+            if grainAlpha > 0 {
+                var grain = context
+                grain.opacity = grainAlpha
+                grain.blendMode = .overlay
+                let tile = max(min(size.width, size.height) / 8, 8)
+                let image = Image(uiImage: GrainTexture.shared)
+                var y: CGFloat = 0
+                while y < size.height {
+                    var x: CGFloat = 0
+                    while x < size.width {
+                        grain.draw(image, in: CGRect(x: x, y: y, width: tile, height: tile))
+                        x += tile
+                    }
+                    y += tile
                 }
             }
         }

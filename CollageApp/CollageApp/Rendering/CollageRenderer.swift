@@ -55,7 +55,52 @@ enum CollageRenderer {
                 spec.frame.decorationElements(canvasSize: canvasSize, spec: spec, layout: layout, cells: cells),
                 in: context.cgContext
             )
+            FrameElementRenderer.drawGrain(
+                alpha: spec.frame.grainAlpha,
+                canvasSize: canvasSize,
+                in: context.cgContext
+            )
         }
+    }
+}
+
+/// フィルム系フレーム用のグレイン（粒状ノイズ）テクスチャ。
+/// シード固定の擬似乱数で生成するため、常に同じ模様＝プレビューと書き出しが一致する。
+enum GrainTexture {
+    /// タイルの1辺（ピクセル）
+    static let tilePixelSize = 256
+
+    static let shared: UIImage = generate()
+
+    private static func generate() -> UIImage {
+        let size = tilePixelSize
+        // SplitMix64 による決定的なノイズ
+        var state: UInt64 = 0x5EED_1234_ABCD_9876
+        func next() -> UInt64 {
+            state &+= 0x9E3779B97F4A7C15
+            var z = state
+            z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+            z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+            return z ^ (z >> 31)
+        }
+        var pixels = [UInt8](repeating: 128, count: size * size)
+        for index in pixels.indices {
+            pixels[index] = UInt8(truncatingIfNeeded: next())
+        }
+        let image: CGImage? = pixels.withUnsafeMutableBytes { buffer in
+            guard let context = CGContext(
+                data: buffer.baseAddress,
+                width: size,
+                height: size,
+                bitsPerComponent: 8,
+                bytesPerRow: size,
+                space: CGColorSpaceCreateDeviceGray(),
+                bitmapInfo: CGImageAlphaInfo.none.rawValue
+            ) else { return nil }
+            return context.makeImage()
+        }
+        guard let image else { return UIImage() }
+        return UIImage(cgImage: image)
     }
 }
 
@@ -97,6 +142,28 @@ enum FrameElementRenderer {
                 context.restoreGState()
             }
         }
+    }
+
+    /// グレインをキャンバス全体にオーバーレイ合成する（alpha 0 なら何もしない）。
+    /// タイルの表示サイズは短辺の 1/8 に固定し、解像度が違っても粒の相対サイズを揃える。
+    static func drawGrain(alpha: CGFloat, canvasSize: CGSize, in context: CGContext) {
+        guard alpha > 0, let grain = GrainTexture.shared.cgImage else { return }
+        let shortSide = min(canvasSize.width, canvasSize.height)
+        guard shortSide > 0 else { return }
+        let tileDisplaySize = shortSide / 8
+        let scale = tileDisplaySize / CGFloat(GrainTexture.tilePixelSize)
+
+        context.saveGState()
+        context.clip(to: CGRect(origin: .zero, size: canvasSize))
+        context.setAlpha(alpha)
+        context.setBlendMode(.overlay)
+        context.scaleBy(x: scale, y: scale)
+        context.draw(
+            grain,
+            in: CGRect(x: 0, y: 0, width: GrainTexture.tilePixelSize, height: GrainTexture.tilePixelSize),
+            byTiling: true
+        )
+        context.restoreGState()
     }
 
     private static func cgColor(_ color: CanvasColor) -> CGColor {

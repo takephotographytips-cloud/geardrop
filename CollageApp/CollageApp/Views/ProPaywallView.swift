@@ -24,7 +24,7 @@ struct ProPaywallView: View {
                         featureRow(
                             icon: "film",
                             title: "デザインフレーム",
-                            subtitle: "フィルムネガ・シネマ・プリントの3種を解放"
+                            subtitle: "フィルム・イエロー・シネマ・プリントの4種を解放（グレイン付き）"
                         )
                         featureRow(
                             icon: "infinity",
