@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stack - 写真を美しい余白で1枚の作品に</title>
+<meta name="description" content="写真(1〜6枚)を美しい余白で1枚の作品にする、3タップ完結のコラージュアプリ。フル解像度・16bit処理・EXIF保持。買い切りのみ、データ収集ゼロ。">
+<style>
+  :root {
+    --bg: #F5F2ED;
+    --ink: #2A2824;
+    --sub: #8A857C;
+    --line: #D8D2C6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+      "Hiragino Kaku Gothic ProN", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+    line-height: 1.9;
+    text-align: center;
+  }
+  .brand { font-size: 1rem; letter-spacing: 0.45em; color: var(--sub); margin-bottom: 48px; }
+  /* アイコンの再現(縦積みモチーフ) */
+  .icon {
+    width: 108px; height: 108px; border-radius: 24px;
+    background: var(--bg); border: 1px solid var(--line);
+    margin: 0 auto 32px; padding: 18px 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: 0 8px 24px rgba(42,40,36,0.08);
+  }
+  .icon span { display: block; height: 20px; }
+  .icon span:nth-child(1) { background: #23211E; }
+  .icon span:nth-child(2) { background: #A79E8F; }
+  .icon span:nth-child(3) { background: #4A473F; }
+  h1 { font-size: 1.6rem; letter-spacing: 0.06em; margin: 0 0 8px; }
+  .tagline { color: #4A4740; margin-bottom: 48px; }
+  .features {
+    text-align: left; display: inline-block; margin: 0 auto 48px;
+    color: #4A4740; font-size: 0.95rem;
+  }
+  .features li { margin: 0.5em 0; }
+  .store-badge {
+    display: inline-block; background: var(--ink); color: var(--bg);
+    text-decoration: none; padding: 14px 36px; border-radius: 999px;
+    letter-spacing: 0.08em; font-weight: 600;
+  }
+  .coming { color: var(--sub); font-size: 0.85rem; margin-top: 12px; }
+  footer {
+    margin-top: 88px; padding-top: 24px; border-top: 1px solid var(--line);
+    color: var(--sub); font-size: 0.85rem; letter-spacing: 0.05em;
+  }
+  footer a { color: inherit; margin: 0 8px; }
+</style>
+</head>
+<body>
+  <div class="brand">STACK</div>
+
+  <div class="icon" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <h1>写真を、美しい余白で<br>1枚の作品に。</h1>
+  <p class="tagline">3タップで完成する、写真好きのためのコラージュアプリ</p>
+
+  <ul class="features">
+    <li>選ぶだけで美しいレイアウト(縦並び / 横並び)</li>
+    <li>枠の中で写真を自由にドラッグ・ズーム</li>
+    <li>フィルムネガ・シネマ・プリントのデザインフレーム</li>
+    <li>フル解像度・16bit処理・EXIF保持の高画質書き出し</li>
+    <li>買い切りのみ、サブスクなし、データ収集ゼロ</li>
+  </ul>
+
+  <div>
+    <!-- リリース後: href を App Store の URL に差し替える -->
+    <a class="store-badge" href="#" onclick="return false;">App Store</a>
+    <div class="coming">Coming soon</div>
+  </div>
+
+  <footer>
+    © 2026 D-STUDIO<br>
+    <a href="./privacy.html">プライバシーポリシー</a>|<a href="./support.html">サポート</a>
+  </footer>
+</body>
+</html>
