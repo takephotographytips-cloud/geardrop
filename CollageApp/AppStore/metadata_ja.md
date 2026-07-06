@@ -97,24 +97,12 @@ Stackは、写真を美しい余白で1枚にまとめる、写真好きのた�
 - **「データを収集しない(Data Not Collected)」で申告**
   - 本アプリは分析SDK・広告SDK・クラッシュレポート等を一切含まない
   - 写真はオンデバイス処理のみ。ネットワーク通信は StoreKit(Apple)のみ
-- プライバシーポリシー URL は必須。「データを収集しません」と明記した1ページを
-  note やGitHub Pages等で公開してURLを設定する(文面例は下記)
-
-### プライバシーポリシー文面例
-
-```
-Stack プライバシーポリシー
-
-Stack(以下「本アプリ」)は、ユーザーの個人情報およびいかなるデータも収集・送信・保存しません。
-
-・写真の処理はすべてお使いの端末内で完結します
-・写真が端末の外に送信されることはありません
-・アクセス解析・広告・トラッキングは一切含まれていません
-・App内課金の処理はAppleのStoreKitを通じて行われ、開発者が購入者の個人情報を取得することはありません
-
-お問い合わせ: (メールアドレス)
-最終更新日: (日付)
-```
+- プライバシーポリシー URL は必須。**完成版ページ: `privacy_policy.html`(日英切替付き)**を
+  GitHub Pages 等で公開して URL を設定する
+  - 公開手順(GitHub Pages): public リポジトリ(例 `stack-site`)を作成 →
+    `privacy_policy.html` を `privacy.html` にリネームしてアップ →
+    Settings → Pages → Branch: main で公開 →
+    URL は `https://<ユーザー名>.github.io/stack-site/privacy.html`
 
 ## 審査メモ(App Review Information の Notes 欄)
 
