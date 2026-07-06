@@ -21,11 +21,13 @@ struct EditorView: View {
                 .padding(.top, 16)
                 .frame(maxHeight: .infinity)
 
-            // 1枚のときは縦・横が同一レイアウトになるため切替を出さない
-            if viewModel.photos.count > 1 {
+            if viewModel.layouts.count > 1 {
                 Picker("レイアウト", selection: layoutSelection) {
                     ForEach(Array(viewModel.layouts.enumerated()), id: \.offset) { index, layout in
-                        Text(layout.displayName).tag(index)
+                        Text(layout.isPro && !presetStore.isPro
+                             ? "\(layout.displayName) 🔒"
+                             : layout.displayName)
+                            .tag(index)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -115,11 +117,17 @@ struct EditorView: View {
 
     /// レイアウト切替。写真データと各セルの変形状態は維持される
     /// （オフセットは正規化保持のため、新しいセルサイズで再クランプされる）。
+    /// Pro 限定レイアウトは未購入時に選択させず、ペイウォールを表示する。
     private var layoutSelection: Binding<Int> {
         Binding {
             viewModel.layoutIndex
         } set: { newValue in
             guard newValue != viewModel.layoutIndex else { return }
+            let layouts = viewModel.layouts
+            if layouts.indices.contains(newValue), layouts[newValue].isPro, !presetStore.isPro {
+                showPaywall = true
+                return
+            }
             viewModel.registerUndoSnapshot()
             viewModel.layoutIndex = newValue
         }

@@ -27,6 +27,11 @@ struct ProPaywallView: View {
                             subtitle: "フィルム・イエロー・シネマ・プリントの4種を解放（グレイン付き）"
                         )
                         featureRow(
+                            icon: "rectangle.split.3x1",
+                            title: "センターフォーカス",
+                            subtitle: "中央の写真を主役にする、雑誌風の全幅レイアウト"
+                        )
+                        featureRow(
                             icon: "infinity",
                             title: "買い切り",
                             subtitle: "一度きりの購入。サブスクリプションはありません"

@@ -25,25 +25,35 @@ final class CollageLayoutTests: XCTestCase {
     // MARK: - レイアウト候補
 
     func testCandidatesPerPhotoCount() {
-        for count in 1...6 {
-            XCTAssertEqual(CollageLayout.candidates(for: count), [.verticalStack, .horizontalRow])
+        XCTAssertEqual(CollageLayout.candidates(for: 1), [.verticalStack, .centerFocus])
+        for count in 2...6 {
+            XCTAssertEqual(
+                CollageLayout.candidates(for: count),
+                [.verticalStack, .horizontalRow, .centerFocus]
+            )
         }
         XCTAssertTrue(CollageLayout.candidates(for: 0).isEmpty)
         XCTAssertTrue(CollageLayout.candidates(for: 7).isEmpty)
     }
 
-    /// 1枚のときは縦・横ともコンテンツ領域全体の1セルになる。
+    /// 1枚のとき: 縦並びはコンテンツ領域全体、センターフォーカスは全幅(左右マージンなし)。
     func testSinglePhoto_cellFillsContentArea() {
         let canvasSize = CGSize(width: 800, height: 1000)
-        for layout in CollageLayout.candidates(for: 1) {
-            let cells = layout.cellRects(
-                canvasSize: canvasSize,
-                spec: spec(ratio: .fourFive),
-                count: 1
-            )
-            XCTAssertEqual(cells.count, 1)
-            assertRect(cells[0], x: 40, y: 40, width: 720, height: 920)
-        }
+        let vertical = CollageLayout.verticalStack.cellRects(
+            canvasSize: canvasSize,
+            spec: spec(ratio: .fourFive),
+            count: 1
+        )
+        XCTAssertEqual(vertical.count, 1)
+        assertRect(vertical[0], x: 40, y: 40, width: 720, height: 920)
+
+        let center = CollageLayout.centerFocus.cellRects(
+            canvasSize: canvasSize,
+            spec: spec(ratio: .fourFive),
+            count: 1
+        )
+        XCTAssertEqual(center.count, 1)
+        assertRect(center[0], x: 0, y: 40, width: 800, height: 920)
     }
 
     // MARK: - 縦並び: 高さ均等・幅共通
@@ -91,10 +101,11 @@ final class CollageLayoutTests: XCTestCase {
         assertRect(cells[2], x: 50 + (cellWidth + 20) * 2, y: 50, width: cellWidth, height: 900)
     }
 
-    // MARK: - 不変条件: 均等サイズ・コンテンツ領域に収まる
+    // MARK: - 不変条件: サイズ規則・コンテンツ領域に収まる
 
-    /// 全レイアウト・全比率・全枚数で、セルサイズが完全に均等であること。
-    func testCellRects_equalSizes_allLayouts() {
+    /// 全レイアウト・全比率・全枚数で、高さは常に共通。
+    /// 幅は縦並び/横並びは均等、センターフォーカスは重み配分（左右対称）。
+    func testCellRects_sizeRules_allLayouts() {
         for count in 1...6 {
             for layout in CollageLayout.candidates(for: count) {
                 for canvasRatio in CanvasRatio.allCases {
@@ -106,17 +117,28 @@ final class CollageLayoutTests: XCTestCase {
                     XCTAssertEqual(cells.count, count)
                     guard let first = cells.first else { continue }
                     for cell in cells {
-                        XCTAssertEqual(cell.width, first.width, accuracy: accuracy,
-                                       "\(layout) x\(count) \(canvasRatio.rawValue): 幅が不均等")
                         XCTAssertEqual(cell.height, first.height, accuracy: accuracy,
                                        "\(layout) x\(count) \(canvasRatio.rawValue): 高さが不均等")
+                    }
+                    if layout == .centerFocus {
+                        // 左右対称
+                        for (cell, mirrored) in zip(cells, cells.reversed()) {
+                            XCTAssertEqual(cell.width, mirrored.width, accuracy: accuracy,
+                                           "\(layout) x\(count): 左右非対称")
+                        }
+                    } else {
+                        for cell in cells {
+                            XCTAssertEqual(cell.width, first.width, accuracy: accuracy,
+                                           "\(layout) x\(count) \(canvasRatio.rawValue): 幅が不均等")
+                        }
                     }
                 }
             }
         }
     }
 
-    /// 全レイアウトで、セルが余白の内側（コンテンツ領域）にちょうど収まる。
+    /// 全レイアウトで、セルが想定領域にちょうど収まる。
+    /// センターフォーカスは横方向がキャンバス端まで、縦方向のみ余白。
     func testCellRects_fillContentArea_allLayouts() {
         for count in 1...6 {
             for layout in CollageLayout.candidates(for: count) {
@@ -124,16 +146,74 @@ final class CollageLayoutTests: XCTestCase {
                     let canvasSize = canvasRatio.size(longSide: 2048)
                     let testSpec = spec(ratio: canvasRatio)
                     let margin = testSpec.marginFraction * min(canvasSize.width, canvasSize.height)
-                    let content = CGRect(origin: .zero, size: canvasSize)
-                        .insetBy(dx: margin, dy: margin)
+                    let expected: CGRect
+                    if layout == .centerFocus {
+                        expected = CGRect(
+                            x: 0, y: margin,
+                            width: canvasSize.width, height: canvasSize.height - margin * 2
+                        )
+                    } else {
+                        expected = CGRect(origin: .zero, size: canvasSize)
+                            .insetBy(dx: margin, dy: margin)
+                    }
                     let cells = layout.cellRects(canvasSize: canvasSize, spec: testSpec, count: count)
                     let union = cells.reduce(CGRect.null) { $0.union($1) }
-                    XCTAssertEqual(union.minX, content.minX, accuracy: accuracy)
-                    XCTAssertEqual(union.minY, content.minY, accuracy: accuracy)
-                    XCTAssertEqual(union.maxX, content.maxX, accuracy: accuracy)
-                    XCTAssertEqual(union.maxY, content.maxY, accuracy: accuracy)
+                    XCTAssertEqual(union.minX, expected.minX, accuracy: accuracy, "\(layout) x\(count)")
+                    XCTAssertEqual(union.minY, expected.minY, accuracy: accuracy, "\(layout) x\(count)")
+                    XCTAssertEqual(union.maxX, expected.maxX, accuracy: accuracy, "\(layout) x\(count)")
+                    XCTAssertEqual(union.maxY, expected.maxY, accuracy: accuracy, "\(layout) x\(count)")
                 }
             }
+        }
+    }
+
+    // MARK: - センターフォーカス（雑誌風・Pro）
+
+    /// キャンバス 1000×1000、余白5%（上下のみ）、間隔2%、3枚。
+    /// usable = 1000 − 40 = 960 → 左右 211.2 / 中央 537.6。左右はキャンバス端に接する。
+    func testCenterFocus_threePhotos() {
+        let cells = CollageLayout.centerFocus.cellRects(
+            canvasSize: CGSize(width: 1000, height: 1000),
+            spec: spec(ratio: .square),
+            count: 3
+        )
+        XCTAssertEqual(cells.count, 3)
+        assertRect(cells[0], x: 0, y: 50, width: 211.2, height: 900)
+        assertRect(cells[1], x: 231.2, y: 50, width: 537.6, height: 900)
+        assertRect(cells[2], x: 788.8, y: 50, width: 211.2, height: 900)
+    }
+
+    /// 5枚: 0.10 / 0.16 / 0.48 / 0.16 / 0.10。端ほど細く、中央が主役。
+    func testCenterFocus_fivePhotos() {
+        let cells = CollageLayout.centerFocus.cellRects(
+            canvasSize: CGSize(width: 1000, height: 1000),
+            spec: spec(ratio: .square),
+            count: 5
+        )
+        XCTAssertEqual(cells.count, 5)
+        assertRect(cells[0], x: 0, y: 50, width: 92, height: 900)
+        assertRect(cells[1], x: 112, y: 50, width: 147.2, height: 900)
+        assertRect(cells[2], x: 279.2, y: 50, width: 441.6, height: 900)
+        assertRect(cells[3], x: 740.8, y: 50, width: 147.2, height: 900)
+        assertRect(cells[4], x: 908, y: 50, width: 92, height: 900)
+    }
+
+    /// 全枚数で: 重みの合計1、左端 x=0・右端がキャンバス右端（外側余白0）。
+    func testCenterFocus_edgeToEdge_allCounts() {
+        for count in 1...6 {
+            let weights = CollageLayout.centerFocusWeights(for: count)
+            XCTAssertEqual(weights.count, count)
+            XCTAssertEqual(weights.reduce(0, +), 1.0, accuracy: accuracy, "x\(count): 重み合計が1でない")
+
+            let canvasSize = CGSize(width: 800, height: 1000)
+            let cells = CollageLayout.centerFocus.cellRects(
+                canvasSize: canvasSize,
+                spec: spec(ratio: .fourFive),
+                count: count
+            )
+            XCTAssertEqual(cells.first?.minX ?? -1, 0, accuracy: accuracy, "x\(count): 左端が0でない")
+            XCTAssertEqual(cells.last?.maxX ?? -1, canvasSize.width, accuracy: accuracy,
+                           "x\(count): 右端がキャンバス端でない")
         }
     }
 

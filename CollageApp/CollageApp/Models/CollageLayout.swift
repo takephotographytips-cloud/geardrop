@@ -9,6 +9,7 @@ import Foundation
 enum CollageLayout: String, CaseIterable, Identifiable, Codable {
     case verticalStack      // 縦並び: 高さ均等・幅共通
     case horizontalRow      // 横並び: 幅均等・高さ共通
+    case centerFocus        // センターフォーカス: 雑誌風。中央が主役・左右は端まで(Pro)
 
     var id: String { rawValue }
 
@@ -16,6 +17,7 @@ enum CollageLayout: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .verticalStack: return "縦並び"
         case .horizontalRow: return "横並び"
+        case .centerFocus: return "センター"
         }
     }
 
@@ -23,20 +25,30 @@ enum CollageLayout: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .verticalStack: return "rectangle.split.1x2"
         case .horizontalRow: return "rectangle.split.2x1"
+        case .centerFocus: return "rectangle.split.3x1"
         }
     }
 
+    /// Pro 限定レイアウトか（Stack Pro で解放）
+    var isPro: Bool { self == .centerFocus }
+
     /// 選択枚数に応じたレイアウト候補。先頭がデフォルト。
-    /// 1枚のときは縦・横とも同一（コンテンツ領域全体の1セル）になる。
+    /// 1枚のときは縦・横が同一（コンテンツ領域全体の1セル）になるため縦のみ出す。
     static func candidates(for photoCount: Int) -> [CollageLayout] {
-        guard (1...6).contains(photoCount) else { return [] }
-        return [.verticalStack, .horizontalRow]
+        switch photoCount {
+        case 1: return [.verticalStack, .centerFocus]
+        case 2...6: return [.verticalStack, .horizontalRow, .centerFocus]
+        default: return []
+        }
     }
 
-    /// 枚数で均等分割したセル矩形を返す。
+    /// セル矩形を返す。
     ///
     /// - 縦並び: セル高さ = (利用可能高さ − ガター合計) ÷ 枚数、幅は共通
     /// - 横並び: セル幅 = (利用可能幅 − ガター合計) ÷ 枚数、高さは共通
+    /// - センターフォーカス: 横一列・枚数別の重み配分。左右はキャンバス端まで
+    ///   （横マージンなし）、余白は写真間（innerSpacing = gutter）のみ。
+    ///   上下は margin（TopPadding / BottomPadding）を適用
     ///
     /// 余白（margin）とガターはキャンバス短辺に対する割合（`CanvasSpec`）。
     func cellRects(canvasSize: CGSize, spec: CanvasSpec, count: Int) -> [CGRect] {
@@ -77,6 +89,32 @@ enum CollageLayout: String, CaseIterable, Identifiable, Codable {
                     height: content.height
                 )
             }
+        case .centerFocus:
+            // 左右マージンなし: x=0 からキャンバス右端まで使う。
+            // 縦方向は content（margin + フレーム帯適用済み）に従う。
+            let usableWidth = canvasSize.width - guttersTotal
+            guard usableWidth > 0 else { return [] }
+            let weights = Self.centerFocusWeights(for: count)
+            var x: CGFloat = 0
+            return weights.map { weight in
+                let width = usableWidth * weight
+                let rect = CGRect(x: x, y: content.minY, width: width, height: content.height)
+                x += width + gutter
+                return rect
+            }
+        }
+    }
+
+    /// センターフォーカスの枚数別の幅配分（合計1）。中央（または中央2枚）が主役。
+    static func centerFocusWeights(for count: Int) -> [CGFloat] {
+        switch count {
+        case 1: return [1.0]
+        case 2: return [0.5, 0.5]
+        case 3: return [0.22, 0.56, 0.22]
+        case 4: return [0.16, 0.34, 0.34, 0.16]
+        case 5: return [0.10, 0.16, 0.48, 0.16, 0.10]
+        case 6: return [0.10, 0.14, 0.26, 0.26, 0.14, 0.10]
+        default: return Array(repeating: 1.0 / CGFloat(max(count, 1)), count: max(count, 1))
         }
     }
 }
