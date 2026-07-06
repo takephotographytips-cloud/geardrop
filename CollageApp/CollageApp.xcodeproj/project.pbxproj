@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
@@ -19,19 +19,12 @@
 /* Begin PBXFileReference section */
 		1A2B3C4D0000000000000006 /* CollageApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CollageApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A2B3C4D0000000000000007 /* CollageAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CollageAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F908BC02FFAC9C900E7F805 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1A2B3C4D0000000000000008 /* CollageApp */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CollageApp;
-			sourceTree = "<group>";
-		};
-		1A2B3C4D0000000000000009 /* CollageAppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CollageAppTests;
-			sourceTree = "<group>";
-		};
+		1A2B3C4D0000000000000008 /* CollageApp */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = CollageApp; sourceTree = "<group>"; };
+		1A2B3C4D0000000000000009 /* CollageAppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = CollageAppTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +48,7 @@
 		1A2B3C4D0000000000000004 = {
 			isa = PBXGroup;
 			children = (
+				2F908BC02FFAC9C900E7F805 /* Products.storekit */,
 				1A2B3C4D0000000000000008 /* CollageApp */,
 				1A2B3C4D0000000000000009 /* CollageAppTests */,
 				1A2B3C4D0000000000000005 /* Products */,
@@ -147,7 +141,6 @@
 			);
 			mainGroup = 1A2B3C4D0000000000000004;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A2B3C4D0000000000000005 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
