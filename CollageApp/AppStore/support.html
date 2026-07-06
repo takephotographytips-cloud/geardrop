@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stack - サポート / Support</title>
+<style>
+  :root {
+    --bg: #F5F2ED;
+    --ink: #2A2824;
+    --sub: #8A857C;
+    --line: #D8D2C6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+      "Hiragino Kaku Gothic ProN", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 24px 96px;
+    line-height: 1.9;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+  }
+  .brand { font-size: 0.95rem; letter-spacing: 0.35em; color: var(--sub); }
+  .brand a { color: inherit; text-decoration: none; }
+  .lang-switch button {
+    font: inherit; font-size: 0.85rem; background: none;
+    border: 1px solid var(--line); color: var(--sub);
+    padding: 4px 14px; cursor: pointer;
+  }
+  .lang-switch button:first-child { border-radius: 6px 0 0 6px; border-right: none; }
+  .lang-switch button:last-child { border-radius: 0 6px 6px 0; }
+  .lang-switch button.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  h1 { font-size: 1.45rem; letter-spacing: 0.04em; margin: 0 0 4px; }
+  h2 {
+    font-size: 1.05rem; letter-spacing: 0.04em;
+    margin-top: 2.6em; padding-top: 1.6em; border-top: 1px solid var(--line);
+  }
+  dt { font-weight: 600; margin-top: 1.6em; }
+  dd { margin: 0.3em 0 0; color: #4A4740; }
+  a { color: inherit; }
+  .contact {
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 20px; margin-top: 40px;
+  }
+  footer {
+    margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line);
+    color: var(--sub); font-size: 0.85rem; letter-spacing: 0.05em;
+  }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><a href="./index.html">STACK</a></div>
+  <nav class="lang-switch" aria-label="Language">
+    <button id="btn-ja" class="active" onclick="setLang('ja')">日本語</button>
+    <button id="btn-en" onclick="setLang('en')">English</button>
+  </nav>
+</header>
+
+<!-- ==================== 日本語 ==================== -->
+<main id="content-ja">
+  <h1>サポート</h1>
+
+  <h2>よくある質問</h2>
+  <dl>
+    <dt>Q. 使い方は?</dt>
+    <dd>A. ①写真を1〜6枚選ぶ → ②レイアウトを確認(縦/横切替、枠内の写真はドラッグ移動・ピンチ拡大)→ ③保存。3タップで完成します。</dd>
+
+    <dt>Q. 写真の画質は落ちますか?</dt>
+    <dd>A. 落ちません。元画像のフル解像度で書き出し、10bit以上の写真は16bit処理で合成します。書き出し形式(HEIC/JPEG)は設定から変更できます。</dd>
+
+    <dt>Q. 撮影情報(EXIF)は残りますか?</dt>
+    <dd>A. 1枚目の写真の撮影日時・カメラ・レンズ情報を書き出した画像に引き継ぎます。設定でオフにもできます。</dd>
+
+    <dt>Q. Stack Pro で購入した内容が反映されません</dt>
+    <dd>A. 設定(ホーム右上の歯車)→「購入を復元」をお試しください。機種変更・再インストール後も同じ Apple Account であれば無料で復元できます。</dd>
+
+    <dt>Q. Stack Pro はサブスクリプションですか?</dt>
+    <dd>A. いいえ。一度だけの買い切りです。自動更新や追加課金はありません。</dd>
+
+    <dt>Q. 編集の途中でアプリを閉じてしまいました</dt>
+    <dd>A. ホームの「前回の編集を再開」から続きを編集できます。</dd>
+
+    <dt>Q. 写真へのアクセスを許可していないのに使えるのはなぜ?</dt>
+    <dd>A. 写真の選択には Apple の仕組み(選択した写真だけをアプリに渡すピッカー)を使っているため、ライブラリ全体への許可は不要です。保存時のみ「追加のみ」の許可をお願いしています。</dd>
+  </dl>
+
+  <div class="contact">
+    <strong>解決しない場合はお問い合わせください</strong><br>
+    メール: <a href="mailto:take.photography.tips@gmail.com">take.photography.tips@gmail.com</a><br>
+    <span style="color:var(--sub); font-size:0.9rem">お使いの機種・iOSバージョン・状況を添えていただくとスムーズです。通常2〜3日以内に返信します。</span>
+  </div>
+</main>
+
+<!-- ==================== English ==================== -->
+<main id="content-en" hidden>
+  <h1>Support</h1>
+
+  <h2>Frequently Asked Questions</h2>
+  <dl>
+    <dt>Q. How do I use Stack?</dt>
+    <dd>A. 1) Pick 1–6 photos. 2) Check the layout (switch vertical/horizontal; drag and pinch each photo inside its frame). 3) Save. Done in three taps.</dd>
+
+    <dt>Q. Does exporting reduce image quality?</dt>
+    <dd>A. No. Collages are exported at your photos' full resolution, and photos with 10-bit or higher depth are composited in 16-bit. You can switch the export format (HEIC/JPEG) in Settings.</dd>
+
+    <dt>Q. Is EXIF metadata preserved?</dt>
+    <dd>A. The capture date, camera, and lens info of your first photo is carried into the exported image. You can turn this off in Settings.</dd>
+
+    <dt>Q. My Stack Pro purchase isn't showing up</dt>
+    <dd>A. Open Settings (gear icon on the home screen) and tap "Restore Purchases." Your purchase restores for free on any device signed in with the same Apple Account.</dd>
+
+    <dt>Q. Is Stack Pro a subscription?</dt>
+    <dd>A. No. It's a one-time purchase. There is no auto-renewal and no additional charge.</dd>
+
+    <dt>Q. I closed the app while editing</dt>
+    <dd>A. Tap "Resume last edit" on the home screen to pick up where you left off.</dd>
+
+    <dt>Q. Why does Stack work without full photo library access?</dt>
+    <dd>A. Photo selection uses Apple's system picker, which hands the app only the photos you choose. Saving uses "add-only" permission.</dd>
+  </dl>
+
+  <div class="contact">
+    <strong>Still need help? Contact us</strong><br>
+    Email: <a href="mailto:take.photography.tips@gmail.com">take.photography.tips@gmail.com</a><br>
+    <span style="color:var(--sub); font-size:0.9rem">Including your device model, iOS version, and what happened helps us respond faster. We usually reply within 2–3 days.</span>
+  </div>
+</main>
+
+<footer>
+  © 2026 D-STUDIO ・ <a href="./privacy.html" id="footer-privacy">プライバシーポリシー</a>
+</footer>
+
+<script>
+  function setLang(lang) {
+    document.getElementById('content-ja').hidden = (lang !== 'ja');
+    document.getElementById('content-en').hidden = (lang !== 'en');
+    document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('footer-privacy').textContent =
+      (lang === 'ja') ? 'プライバシーポリシー' : 'Privacy Policy';
+    document.documentElement.lang = lang;
+  }
+  if (!(navigator.language || '').toLowerCase().startsWith('ja')) {
+    setLang('en');
+  }
+</script>
+</body>
+</html>

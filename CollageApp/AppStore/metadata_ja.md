@@ -97,12 +97,17 @@ Stackは、写真を美しい余白で1枚にまとめる、写真好きのた�
 - **「データを収集しない(Data Not Collected)」で申告**
   - 本アプリは分析SDK・広告SDK・クラッシュレポート等を一切含まない
   - 写真はオンデバイス処理のみ。ネットワーク通信は StoreKit(Apple)のみ
-- プライバシーポリシー URL は必須。**完成版ページ: `privacy_policy.html`(日英切替付き)**を
-  GitHub Pages 等で公開して URL を設定する
-  - 公開手順(GitHub Pages): public リポジトリ(例 `stack-site`)を作成 →
-    `privacy_policy.html` を `privacy.html` にリネームしてアップ →
-    Settings → Pages → Branch: main で公開 →
-    URL は `https://<ユーザー名>.github.io/stack-site/privacy.html`
+- プライバシーポリシー URL・サポート URL は必須。完成版のサイト一式(3ファイル・日英切替付き)を
+  GitHub Pages で公開する:
+  - 公開手順: public リポジトリ(例 `stack-site`)を作成 → 以下をアップロード
+    - `index.html`(そのまま)… マーケティング URL(任意項目)にも使える
+    - `privacy_policy.html` → **`privacy.html` にリネーム**
+    - `support.html`(そのまま)
+  - Settings → Pages → Branch: main で公開
+  - ASC に設定する URL:
+    - プライバシーポリシー URL: `https://<ユーザー名>.github.io/stack-site/privacy.html`
+    - サポート URL: `https://<ユーザー名>.github.io/stack-site/support.html`
+  - リリース後: `index.html` 内の App Store バッジの `href` をストア URL に差し替え
 
 ## 審査メモ(App Review Information の Notes 欄)
 
