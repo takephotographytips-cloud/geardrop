@@ -183,7 +183,13 @@ enum ExportRenderer {
                 )
                 context.saveGState()
                 context.clip(to: cell)
-                draw(decoded.image, orientation: decoded.orientation, in: drawRect, context: context)
+                draw(
+                    decoded.image,
+                    orientation: decoded.orientation,
+                    rotationDegrees: CellTransform.normalizedDegrees(transform.rotationDegrees),
+                    in: drawRect,
+                    context: context
+                )
                 context.restoreGState()
             }
         }
@@ -284,15 +290,21 @@ enum ExportRenderer {
         return (image, .up)
     }
 
-    /// 左上原点に反転済みのコンテキストへ、EXIF 向きを補正しつつ rect に描画する。
+    /// 左上原点に反転済みのコンテキストへ、EXIF 向きとユーザー回転を補正しつつ rect に描画する。
     private static func draw(
         _ image: CGImage,
         orientation: CGImagePropertyOrientation,
+        rotationDegrees: Double,
         in rect: CGRect,
         context: CGContext
     ) {
         context.saveGState()
         context.translateBy(x: rect.midX, y: rect.midY)
+        // ユーザー回転（水平・90°補正）: 左上原点座標では正の角度=時計回りで
+        // SwiftUI の rotationEffect と一致する。反転打ち消しの前に適用する
+        if rotationDegrees != 0 {
+            context.rotate(by: CGFloat(rotationDegrees) * .pi / 180)
+        }
         // コンテキスト全体の上下反転を打ち消し、CG 標準の向きで画像を描く
         context.scaleBy(x: 1, y: -1)
         switch orientation {

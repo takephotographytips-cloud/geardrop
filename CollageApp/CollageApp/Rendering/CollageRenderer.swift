@@ -45,10 +45,24 @@ enum CollageRenderer {
                     cell: cell,
                     transform: transform
                 )
-                context.cgContext.saveGState()
-                context.cgContext.clip(to: cell)
-                image.draw(in: imageRect)
-                context.cgContext.restoreGState()
+                let rotation = CellTransform.normalizedDegrees(transform.rotationDegrees)
+                let cgContext = context.cgContext
+                cgContext.saveGState()
+                cgContext.clip(to: cell)
+                if rotation != 0 {
+                    // 矩形中心を軸に回転して描画（プレビューの rotationEffect と一致）
+                    cgContext.translateBy(x: imageRect.midX, y: imageRect.midY)
+                    cgContext.rotate(by: CGFloat(rotation) * .pi / 180)
+                    image.draw(in: CGRect(
+                        x: -imageRect.width / 2,
+                        y: -imageRect.height / 2,
+                        width: imageRect.width,
+                        height: imageRect.height
+                    ))
+                } else {
+                    image.draw(in: imageRect)
+                }
+                cgContext.restoreGState()
             }
 
             FrameElementRenderer.draw(

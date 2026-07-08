@@ -40,6 +40,9 @@ final class EditorViewModel {
     /// レイアウトを変更してもズーム率・位置を維持できるよう、セル位置ではなく写真に紐付ける。
     var transforms: [UUID: CellTransform] = [:]
 
+    /// 調整対象として選択中の写真（タップで選択、水平・回転補正パネルを表示）
+    var selectedPhotoID: UUID?
+
     /// 選択枚数に応じたレイアウト候補
     var layouts: [CollageLayout] {
         CollageLayout.candidates(for: photos.count)
@@ -54,6 +57,40 @@ final class EditorViewModel {
     /// 表示順に並べた変形状態（レンダラへ渡す用）
     var orderedTransforms: [CellTransform] {
         photos.map { transforms[$0.id] ?? CellTransform() }
+    }
+
+    func transform(for id: UUID) -> CellTransform {
+        transforms[id] ?? CellTransform()
+    }
+
+    var selectedPhotoIndex: Int? {
+        guard let id = selectedPhotoID else { return nil }
+        return photos.firstIndex { $0.id == id }
+    }
+
+    // MARK: - 水平・回転補正（Stack Pro）
+
+    /// 水平微調整（±15°）。90°単位の成分は維持し、微調整成分だけ差し替える。
+    /// Undo スナップショットはスライダーのドラッグ開始時に View 側で登録する。
+    func setFineAngle(_ degrees: Double, for id: UUID) {
+        var current = transform(for: id)
+        let clamped = min(max(degrees, CellGeometry.fineAngleRange.lowerBound), CellGeometry.fineAngleRange.upperBound)
+        current.rotationDegrees = CellTransform.normalizedDegrees(current.quarterTurnsDegrees + clamped)
+        transforms[id] = current
+    }
+
+    /// 90°回転（時計回り）。水平微調整の成分は維持される。
+    func rotateQuarter(for id: UUID) {
+        registerUndoSnapshot()
+        var current = transform(for: id)
+        current.rotationDegrees = CellTransform.normalizedDegrees(current.rotationDegrees + 90)
+        transforms[id] = current
+    }
+
+    /// 選択中写真の変形（ズーム・位置・回転）を初期状態に戻す。
+    func resetTransform(for id: UUID) {
+        registerUndoSnapshot()
+        transforms[id] = CellTransform()
     }
 
     // MARK: - 写真読み込み
@@ -72,6 +109,7 @@ final class EditorViewModel {
         photos = loaded
         layoutIndex = 0
         transforms = [:]
+        selectedPhotoID = nil
         undoStack.removeAll()
         redoStack.removeAll()
         saveState = .idle
@@ -170,6 +208,7 @@ final class EditorViewModel {
             loaded.map(\.id),
             session.snapshot.transforms
         ))
+        selectedPhotoID = nil
         undoStack.removeAll()
         redoStack.removeAll()
         saveState = .idle

@@ -21,24 +21,33 @@ struct EditorView: View {
                 .padding(.top, 16)
                 .frame(maxHeight: .infinity)
 
-            if viewModel.layouts.count > 1 {
-                Picker("レイアウト", selection: layoutSelection) {
-                    ForEach(Array(viewModel.layouts.enumerated()), id: \.offset) { index, layout in
-                        Text(layout.isPro && !presetStore.isPro
-                             ? "\(layout.displayName) 🔒"
-                             : layout.displayName)
-                            .tag(index)
-                    }
+            if let selectedID = viewModel.selectedPhotoID {
+                // 写真タップ中: その1枚の調整パネル（水平・回転補正 = Pro）
+                PhotoAdjustPanel(viewModel: viewModel, store: presetStore, photoID: selectedID) {
+                    showPaywall = true
                 }
-                .pickerStyle(.segmented)
                 .padding(.horizontal)
-            }
+                .padding(.bottom)
+            } else {
+                if viewModel.layouts.count > 1 {
+                    Picker("レイアウト", selection: layoutSelection) {
+                        ForEach(Array(viewModel.layouts.enumerated()), id: \.offset) { index, layout in
+                            Text(layout.isPro && !presetStore.isPro
+                                 ? "\(layout.displayName) 🔒"
+                                 : layout.displayName)
+                                .tag(index)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                }
 
-            AdjustPanel(viewModel: viewModel, store: presetStore) {
-                showPaywall = true
+                AdjustPanel(viewModel: viewModel, store: presetStore) {
+                    showPaywall = true
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
             }
-            .padding(.horizontal)
-            .padding(.bottom)
         }
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)

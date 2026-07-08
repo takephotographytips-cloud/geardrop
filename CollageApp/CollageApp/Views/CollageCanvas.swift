@@ -36,11 +36,22 @@ struct CollageCanvasView: View {
                             image: photo.image,
                             cellSize: cell.size,
                             transform: transformBinding(for: photo.id),
-                            onGestureBegan: { viewModel.registerUndoSnapshot() }
+                            onGestureBegan: { viewModel.registerUndoSnapshot() },
+                            onTap: {
+                                // タップで調整対象を選択（同じ写真を再タップで解除）
+                                viewModel.selectedPhotoID =
+                                    (viewModel.selectedPhotoID == photo.id) ? nil : photo.id
+                            }
                         )
                         .frame(width: cell.width, height: cell.height)
                         .position(x: cell.midX, y: cell.midY)
                     }
+                }
+                // 選択中セル: 三分割グリッド＋枠（水平合わせの目安）
+                if let selectedIndex = viewModel.selectedPhotoIndex,
+                   cells.indices.contains(selectedIndex) {
+                    CellSelectionOverlay(cell: cells[selectedIndex])
+                        .allowsHitTesting(false)
                 }
                 if spec.frame != .none {
                     FrameDecorationCanvas(
@@ -66,6 +77,32 @@ struct CollageCanvasView: View {
         } set: { newValue in
             viewModel.transforms[id] = newValue
         }
+    }
+}
+
+/// 選択中セルのオーバーレイ: 三分割グリッド＋白枠。
+/// 水平・回転補正時に地平線などを合わせやすくする。
+struct CellSelectionOverlay: View {
+    let cell: CGRect
+
+    var body: some View {
+        ZStack {
+            Path { path in
+                for fraction in [1.0 / 3.0, 2.0 / 3.0] as [CGFloat] {
+                    let x = cell.minX + cell.width * fraction
+                    path.move(to: CGPoint(x: x, y: cell.minY))
+                    path.addLine(to: CGPoint(x: x, y: cell.maxY))
+                    let y = cell.minY + cell.height * fraction
+                    path.move(to: CGPoint(x: cell.minX, y: y))
+                    path.addLine(to: CGPoint(x: cell.maxX, y: y))
+                }
+            }
+            .stroke(.white.opacity(0.55), lineWidth: 1)
+
+            Path(cell)
+                .stroke(.white, lineWidth: 2)
+        }
+        .shadow(color: .black.opacity(0.25), radius: 1)
     }
 }
 
@@ -128,6 +165,7 @@ struct CollageCellView: View {
     let cellSize: CGSize
     @Binding var transform: CellTransform
     var onGestureBegan: () -> Void
+    var onTap: () -> Void = {}
 
     /// ジェスチャー開始時点の変形状態（ドラッグとピンチで独立に保持）
     @State private var dragStart: CellTransform?
@@ -151,11 +189,13 @@ struct CollageCellView: View {
             Image(uiImage: image)
                 .resizable()
                 .frame(width: imageRect.width, height: imageRect.height)
+                .rotationEffect(.degrees(transform.rotationDegrees))
                 .position(x: imageRect.midX, y: imageRect.midY)
         }
         .frame(width: cellSize.width, height: cellSize.height)
         .clipped()
         .contentShape(Rectangle())
+        .onTapGesture { onTap() }
         .gesture(dragGesture.simultaneously(with: magnifyGesture))
     }
 

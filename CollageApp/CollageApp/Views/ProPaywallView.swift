@@ -32,6 +32,11 @@ struct ProPaywallView: View {
                             subtitle: "中央の写真を主役にする、雑誌風の全幅レイアウト"
                         )
                         featureRow(
+                            icon: "crop.rotate",
+                            title: "水平・回転補正",
+                            subtitle: "写真ごとに±15°の水平調整と90°回転。グリッド表示付き"
+                        )
+                        featureRow(
                             icon: "infinity",
                             title: "買い切り",
                             subtitle: "一度きりの購入。サブスクリプションはありません"

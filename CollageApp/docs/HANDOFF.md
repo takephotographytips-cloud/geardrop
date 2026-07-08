@@ -39,6 +39,7 @@ D-STUDIO ダイヤ監督。日本語でやりとり。**リリースを急いで
 | Phase 3 | プリセット保存/呼出、セッション復元、課金(当初はパック3種×¥480) |
 | **課金モデル v2** | ユーザー判断で単一の「**Stack Pro**」¥980 買い切りに変更。①プリセット無料3つ制限 ②デザインフレーム4種(フィルム/イエロー/シネマ/プリント)+グレイン |
 | Pro 拡張 | **センターフォーカスレイアウト**追加(Pro 限定・雑誌風)。横一列・重み配分・左右マージン0(端まで)・余白は写真間のみ。`CollageLayout.centerFocus` + `centerFocusWeights(for:)`。1枚時の候補は [縦, センター](縦と横が同一のため)。テストの「セル均等」不変条件はセンターフォーカスだけ例外(高さ共通・左右対称で検証) |
+| Pro 拡張2 | **水平・回転補正**(Pro 限定)。`CellTransform.rotationDegrees` を有効化(90°単位 `quarterTurnsDegrees` + 微調整 `fineAngleDegrees` の合成、`normalizedDegrees` で (-180,180] に正規化)。カバー計算は回転対応: needW = W\|cosθ\|+H\|sinθ\| 等(θ=0 で旧式と一致)、オフセットは写真ローカル軸 (u,v) に射影してクランプ(Python 照合済み)。UI: 写真タップ → `selectedPhotoID` → PhotoAdjustPanel(±15°スライダー/90°回転/リセット)+ CellSelectionOverlay(三分割グリッド)。描画: プレビューは rotationEffect、書き出しは矩形中心軸の CGContext 回転(ExportRenderer では反転打ち消しの**前**に適用) |
 | Phase 4 | アイコン生成、リリース設定、App Store 素材ドラフト(`AppStore/`) |
 
 ## 3. アーキテクチャと不変条件
