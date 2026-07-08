@@ -50,17 +50,10 @@ final class ProFeatureTests: XCTestCase {
         XCTAssertGreaterThan(framed[0].minX, plain[0].minX)
     }
 
-    /// センターフォーカスレイアウトのみ Pro 限定。
-    func testProLayouts() {
-        XCTAssertFalse(CollageLayout.verticalStack.isPro)
-        XCTAssertFalse(CollageLayout.horizontalRow.isPro)
-        XCTAssertTrue(CollageLayout.centerFocus.isPro)
-    }
-
     /// Pro フレームは装飾要素を生成し、すべてキャンバス内に収まる。
     func testDecorationElements_withinCanvas() {
         for frame in FrameStyle.allCases where frame != .none {
-            for layout in [CollageLayout.verticalStack, .horizontalRow, .centerFocus] {
+            for layout in [CollageLayout.verticalStack, .horizontalRow] {
                 for count in [1, 3, 6] {
                     var spec = CanvasSpec()
                     spec.frame = frame

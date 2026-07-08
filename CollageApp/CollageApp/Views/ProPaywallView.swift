@@ -27,11 +27,6 @@ struct ProPaywallView: View {
                             subtitle: "フィルム・イエロー・シネマ・プリントの4種を解放（グレイン付き）"
                         )
                         featureRow(
-                            icon: "rectangle.split.3x1",
-                            title: "センターフォーカス",
-                            subtitle: "中央の写真を主役にする、雑誌風の全幅レイアウト"
-                        )
-                        featureRow(
                             icon: "crop.rotate",
                             title: "水平・回転補正",
                             subtitle: "写真ごとに±15°の水平調整と90°回転。グリッド表示付き"
