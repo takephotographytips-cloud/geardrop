@@ -39,6 +39,7 @@ D-STUDIO ダイヤ監督。日本語でやりとり。**リリースを急いで
 | Phase 3 | プリセット保存/呼出、セッション復元、課金(当初はパック3種×¥480) |
 | **課金モデル v2** | ユーザー判断で単一の「**Stack Pro**」¥980 買い切りに変更。①プリセット無料3つ制限 ②デザインフレーム4種(フィルム/イエロー/シネマ/プリント)+グレイン |
 | センター廃止 | 一度追加した「センターフォーカス」レイアウトはユーザー判断で**廃止**(最初のコンセプト=縦・横の2パターンのみに戻す)。レイアウトは常に `[.verticalStack, .horizontalRow]` |
+| ジェスチャー整理 | 「写真タップ→調整画面」は移動/拡大と誤爆するため**廃止**。3操作を分離: 通常モード(`CanvasInteraction.arrange`)=ドラッグ移動/ピンチ拡大/**長押し0.5秒で入れ替え**(タップ無反応)、調整モード(`.adjust`、下部「写真を調整」ボタンで切替)=タップで対象選択+スライダー。入れ替えは `EditorViewModel.swapPhotos(from:to:)`(photos 配列を swapAt、変形は写真IDキーなので追従)。Undo スナップショットに `photoOrder: [UUID]` を追加し `apply` で並べ替え復元。入れ替えジェスチャーは `CollageCellView` の LongPress(0.5s).sequenced(before: Drag) を `.highPriorityGesture`(swapEnabled 時のみ `.if` で付与)、浮き上がりは `@GestureState liftTranslation` + 触覚。ドロップ先は `CollageCanvasView.handleSwap` がセル中心+移動量の内包判定。**実機でジェスチャー競合の微調整が要る可能性あり(Linux でビルド不可のため)** |
 | Pro 拡張2 | **水平・回転補正**(Pro 限定)。`CellTransform.rotationDegrees` を有効化(90°単位 `quarterTurnsDegrees` + 微調整 `fineAngleDegrees` の合成、`normalizedDegrees` で (-180,180] に正規化)。カバー計算は回転対応: needW = W\|cosθ\|+H\|sinθ\| 等(θ=0 で旧式と一致)、オフセットは写真ローカル軸 (u,v) に射影してクランプ(Python 照合済み)。UI: 写真タップ → `selectedPhotoID` → PhotoAdjustPanel(±15°スライダー/90°回転/リセット)+ CellSelectionOverlay(三分割グリッド)。描画: プレビューは rotationEffect、書き出しは矩形中心軸の CGContext 回転(ExportRenderer では反転打ち消しの**前**に適用) |
 | Phase 4 | アイコン生成、リリース設定、App Store 素材ドラフト(`AppStore/`) |
 

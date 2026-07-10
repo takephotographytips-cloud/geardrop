@@ -1,5 +1,18 @@
 import SwiftUI
 
+extension View {
+    /// 条件が真のときだけ modifier を適用する。
+    /// （入れ替えジェスチャーを通常モードのみ付与するために使用）
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}
+
 extension CanvasColor {
     var color: Color {
         Color(.sRGB, red: red, green: green, blue: blue)
@@ -13,10 +26,19 @@ extension CanvasColor {
     }
 }
 
+/// キャンバスの操作モード。
+/// - arrange: 通常。ドラッグ=移動 / ピンチ=拡大縮小 / 長押し=入れ替え。タップは無反応
+/// - adjust: 「調整」ボタンで入る。タップ=調整対象の選択、ドラッグ/ピンチは移動・拡大。入れ替えは無効
+enum CanvasInteraction {
+    case arrange
+    case adjust
+}
+
 /// キャンバスプレビュー（Instagram / Canva 型）。
 /// セル（枠）は固定で、各セル内の写真だけをドラッグ移動・ピンチ拡大縮小できる。
 struct CollageCanvasView: View {
     @Bindable var viewModel: EditorViewModel
+    var interaction: CanvasInteraction = .arrange
 
     var body: some View {
         GeometryReader { geometry in
@@ -36,19 +58,23 @@ struct CollageCanvasView: View {
                             image: photo.image,
                             cellSize: cell.size,
                             transform: transformBinding(for: photo.id),
+                            swapEnabled: interaction == .arrange && viewModel.photos.count > 1,
                             onGestureBegan: { viewModel.registerUndoSnapshot() },
                             onTap: {
-                                // タップで調整対象を選択（同じ写真を再タップで解除）
-                                viewModel.selectedPhotoID =
-                                    (viewModel.selectedPhotoID == photo.id) ? nil : photo.id
+                                guard interaction == .adjust else { return }
+                                viewModel.selectedPhotoID = photo.id
+                            },
+                            onSwapEnded: { translation in
+                                handleSwap(sourceIndex: index, translation: translation, cells: cells)
                             }
                         )
                         .frame(width: cell.width, height: cell.height)
                         .position(x: cell.midX, y: cell.midY)
                     }
                 }
-                // 選択中セル: 三分割グリッド＋枠（水平合わせの目安）
-                if let selectedIndex = viewModel.selectedPhotoIndex,
+                // 調整中の選択セル: 三分割グリッド＋枠（水平合わせの目安）
+                if interaction == .adjust,
+                   let selectedIndex = viewModel.selectedPhotoIndex,
                    cells.indices.contains(selectedIndex) {
                     CellSelectionOverlay(cell: cells[selectedIndex])
                         .allowsHitTesting(false)
@@ -68,6 +94,19 @@ struct CollageCanvasView: View {
             }
         }
         .aspectRatio(viewModel.spec.ratio.value, contentMode: .fit)
+    }
+
+    /// ドロップ位置にあるセルへ入れ替える。セル外に落とした場合は何もしない。
+    private func handleSwap(sourceIndex: Int, translation: CGSize, cells: [CGRect]) {
+        guard cells.indices.contains(sourceIndex) else { return }
+        let source = cells[sourceIndex]
+        let dropPoint = CGPoint(
+            x: source.midX + translation.width,
+            y: source.midY + translation.height
+        )
+        guard let target = cells.firstIndex(where: { $0.contains(dropPoint) }),
+              target != sourceIndex else { return }
+        viewModel.swapPhotos(from: sourceIndex, to: target)
     }
 
     /// セルごとの変形状態への Binding（未編集セルはデフォルト = カバー・中央）
@@ -164,12 +203,20 @@ struct CollageCellView: View {
     let image: UIImage
     let cellSize: CGSize
     @Binding var transform: CellTransform
+    /// 長押しドラッグでの入れ替えを許可するか（通常モードかつ2枚以上のとき true）
+    var swapEnabled: Bool = false
     var onGestureBegan: () -> Void
     var onTap: () -> Void = {}
+    /// 入れ替えドラッグ終了時、セル中心からの移動量を通知する
+    var onSwapEnded: (CGSize) -> Void = { _ in }
 
     /// ジェスチャー開始時点の変形状態（ドラッグとピンチで独立に保持）
     @State private var dragStart: CellTransform?
     @State private var pinchStart: CellTransform?
+    /// 入れ替え中の浮き上がり移動量（長押し完了で .zero、指の移動で更新、離すと nil に戻る）
+    @GestureState private var liftTranslation: CGSize? = nil
+
+    private var isLifted: Bool { liftTranslation != nil }
 
     private var imageRatio: CGFloat {
         image.size.height > 0 ? image.size.width / image.size.height : 1
@@ -194,9 +241,47 @@ struct CollageCellView: View {
         }
         .frame(width: cellSize.width, height: cellSize.height)
         .clipped()
+        .overlay {
+            if isLifted {
+                Rectangle().strokeBorder(.white, lineWidth: 2)
+            }
+        }
         .contentShape(Rectangle())
+        .scaleEffect(isLifted ? 1.05 : 1)
+        .shadow(color: .black.opacity(isLifted ? 0.35 : 0), radius: isLifted ? 12 : 0)
+        .offset(liftTranslation ?? .zero)
+        .zIndex(isLifted ? 1 : 0)
+        .animation(.easeOut(duration: 0.15), value: isLifted)
         .onTapGesture { onTap() }
         .gesture(dragGesture.simultaneously(with: magnifyGesture))
+        .if(swapEnabled) { view in
+            view.highPriorityGesture(swapGesture)
+        }
+        .onChange(of: isLifted) { _, lifted in
+            if lifted {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
+        }
+    }
+
+    /// 長押し(0.5秒)で浮かせてドラッグ → 入れ替え。
+    /// 素早いドラッグは長押しが成立せず、通常のパン(dragGesture)に流れる。
+    private var swapGesture: some Gesture {
+        LongPressGesture(minimumDuration: 0.5)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($liftTranslation) { value, state, _ in
+                switch value {
+                case .second(true, let drag):
+                    state = drag?.translation ?? .zero
+                default:
+                    state = nil
+                }
+            }
+            .onEnded { value in
+                if case .second(true, let drag?) = value {
+                    onSwapEnded(drag.translation)
+                }
+            }
     }
 
     /// ドラッグで上下左右へ移動。オフセットはセル寸法で正規化して保持する。

@@ -12,20 +12,26 @@ struct EditorView: View {
     @State private var showPresetNameAlert = false
     @State private var presetName = ""
     @State private var showPaywall = false
+    /// 「調整」ボタンで入る、写真ごとの水平・回転補正モード
+    @State private var isAdjusting = false
 
     var body: some View {
         VStack(spacing: 16) {
-            CollageCanvasView(viewModel: viewModel)
+            CollageCanvasView(viewModel: viewModel, interaction: isAdjusting ? .adjust : .arrange)
                 .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 .frame(maxHeight: .infinity)
 
-            if let selectedID = viewModel.selectedPhotoID {
-                // 写真タップ中: その1枚の調整パネル（水平・回転補正 = Pro）
-                PhotoAdjustPanel(viewModel: viewModel, store: presetStore, photoID: selectedID) {
-                    showPaywall = true
-                }
+            if isAdjusting, let selectedID = viewModel.selectedPhotoID {
+                // 調整モード: 選択中の写真の水平・回転補正パネル（Pro）
+                PhotoAdjustPanel(
+                    viewModel: viewModel,
+                    store: presetStore,
+                    photoID: selectedID,
+                    onRequestPro: { showPaywall = true },
+                    onDone: { exitAdjustMode() }
+                )
                 .padding(.horizontal)
                 .padding(.bottom)
             } else {
@@ -43,6 +49,16 @@ struct EditorView: View {
                 AdjustPanel(viewModel: viewModel, store: presetStore) {
                     showPaywall = true
                 }
+                .padding(.horizontal)
+
+                Button {
+                    enterAdjustMode()
+                } label: {
+                    Label("写真を調整（水平・回転）", systemImage: "crop.rotate")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.bordered)
                 .padding(.horizontal)
                 .padding(.bottom)
             }
@@ -120,6 +136,19 @@ struct EditorView: View {
                 }
             }
         )
+    }
+
+    private func enterAdjustMode() {
+        // 1枚目を初期選択（未選択のまま入らないように）
+        if viewModel.selectedPhotoID == nil {
+            viewModel.selectedPhotoID = viewModel.photos.first?.id
+        }
+        isAdjusting = true
+    }
+
+    private func exitAdjustMode() {
+        isAdjusting = false
+        viewModel.selectedPhotoID = nil
     }
 
     /// レイアウト切替。写真データと各セルの変形状態は維持される

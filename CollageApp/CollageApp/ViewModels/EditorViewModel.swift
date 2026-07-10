@@ -68,6 +68,17 @@ final class EditorViewModel {
         return photos.firstIndex { $0.id == id }
     }
 
+    // MARK: - 写真の入れ替え
+
+    /// 2枚の写真の配置位置を入れ替える（長押しドラッグ&ドロップ）。
+    /// 変形状態は写真 ID に紐付くため、各写真は自分のズーム・位置を保ったまま移動する。
+    func swapPhotos(from: Int, to: Int) {
+        guard from != to, photos.indices.contains(from), photos.indices.contains(to) else { return }
+        registerUndoSnapshot()
+        photos.swapAt(from, to)
+        persistSessionMetadata()
+    }
+
     // MARK: - 水平・回転補正（Stack Pro）
 
     /// 水平微調整（±15°）。90°単位の成分は維持し、微調整成分だけ差し替える。
@@ -221,6 +232,8 @@ final class EditorViewModel {
         var spec: CanvasSpec
         var layoutIndex: Int
         var transforms: [UUID: CellTransform]
+        /// 写真の並び順（入れ替えを Undo できるよう ID 列で保持。画像本体は保持しない）
+        var photoOrder: [UUID]
     }
 
     private var undoStack: [Snapshot] = []
@@ -255,12 +268,18 @@ final class EditorViewModel {
     }
 
     private func currentSnapshot() -> Snapshot {
-        Snapshot(spec: spec, layoutIndex: layoutIndex, transforms: transforms)
+        Snapshot(spec: spec, layoutIndex: layoutIndex, transforms: transforms, photoOrder: photos.map(\.id))
     }
 
     private func apply(_ snapshot: Snapshot) {
         spec = snapshot.spec
         layoutIndex = snapshot.layoutIndex
         transforms = snapshot.transforms
+        // 並び順を復元（現在の写真集合を snapshot の順に並べ替え）
+        let byID = Dictionary(uniqueKeysWithValues: photos.map { ($0.id, $0) })
+        let reordered = snapshot.photoOrder.compactMap { byID[$0] }
+        if reordered.count == photos.count {
+            photos = reordered
+        }
     }
 }
