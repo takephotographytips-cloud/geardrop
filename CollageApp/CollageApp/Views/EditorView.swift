@@ -9,6 +9,7 @@ struct EditorView: View {
     let presetStore: PresetStore
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(CoachMarksController.self) private var coachMarks
     @State private var showPresetNameAlert = false
     @State private var presetName = ""
     @State private var showPaywall = false
@@ -18,6 +19,7 @@ struct EditorView: View {
     var body: some View {
         VStack(spacing: 16) {
             CollageCanvasView(viewModel: viewModel, interaction: isAdjusting ? .adjust : .arrange)
+                .coachMarkTarget(.canvas)
                 .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
@@ -43,6 +45,7 @@ struct EditorView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .coachMarkTarget(.layoutPicker)
                     .padding(.horizontal)
                 }
 
@@ -52,11 +55,22 @@ struct EditorView: View {
                 .padding(.horizontal)
 
                 Button {
-                    enterAdjustMode()
+                    // 水平・回転補正は Pro。未購入時はロック表示 → ペイウォール
+                    if presetStore.isPro {
+                        enterAdjustMode()
+                    } else {
+                        showPaywall = true
+                    }
                 } label: {
-                    Label("写真を調整（水平・回転）", systemImage: "crop.rotate")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
+                    HStack(spacing: 6) {
+                        if !presetStore.isPro {
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                        }
+                        Label("写真を調整（水平・回転）", systemImage: "crop.rotate")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
                 }
                 .buttonStyle(.bordered)
                 .padding(.horizontal)
@@ -160,11 +174,13 @@ struct EditorView: View {
             guard newValue != viewModel.layoutIndex else { return }
             viewModel.registerUndoSnapshot()
             viewModel.layoutIndex = newValue
+            coachMarks.noteAction(.layoutChanged)
         }
     }
 
     private var saveButton: some View {
         Button {
+            coachMarks.noteAction(.collageSaved)
             Task {
                 await viewModel.saveToPhotoLibrary()
                 if viewModel.saveState == .saved {

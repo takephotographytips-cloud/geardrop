@@ -4,6 +4,8 @@ import SwiftUI
 /// 書き出し設定 / Stack Pro（アップグレード・購入復元）/ バージョン
 struct SettingsView: View {
     let store: PresetStore
+    /// 「チュートリアルを見る」タップ時（シートを閉じて再表示する処理は呼び出し側）
+    var onReplayTutorial: (() -> Void)? = nil
 
     @AppStorage(ExportRenderer.Options.formatKey)
     private var formatRaw = ExportRenderer.Format.heic.rawValue
@@ -53,6 +55,13 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    if let onReplayTutorial {
+                        Button {
+                            onReplayTutorial()
+                        } label: {
+                            Label("チュートリアルを見る", systemImage: "questionmark.circle")
+                        }
+                    }
                     LabeledContent("バージョン", value: appVersion)
                 }
             }

@@ -210,6 +210,8 @@ struct CollageCellView: View {
     /// 入れ替えドラッグ終了時、セル中心からの移動量を通知する
     var onSwapEnded: (CGSize) -> Void = { _ in }
 
+    @Environment(CoachMarksController.self) private var coachMarks
+
     /// ジェスチャー開始時点の変形状態（ドラッグとピンチで独立に保持）
     @State private var dragStart: CellTransform?
     @State private var pinchStart: CellTransform?
@@ -300,7 +302,10 @@ struct CollageCellView: View {
                 )
                 transform = CellGeometry.clamped(next, imageRatio: imageRatio, cell: cellRect)
             }
-            .onEnded { _ in dragStart = nil }
+            .onEnded { _ in
+                dragStart = nil
+                coachMarks.noteAction(.photoDragged)
+            }
     }
 
     /// ピンチイン・アウトで拡大縮小（カバー状態が下限）。
@@ -316,6 +321,9 @@ struct CollageCellView: View {
                 next.scale = start.scale * value.magnification
                 transform = CellGeometry.clamped(next, imageRatio: imageRatio, cell: cellRect)
             }
-            .onEnded { _ in pinchStart = nil }
+            .onEnded { _ in
+                pinchStart = nil
+                coachMarks.noteAction(.photoPinched)
+            }
     }
 }

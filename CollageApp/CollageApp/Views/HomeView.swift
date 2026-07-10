@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var didAutoPresentPicker = false
     @State private var pendingPreset: Preset?
     @State private var hasStoredSession = false
+    @State private var coachMarks = CoachMarksController()
 
     var body: some View {
         NavigationStack {
@@ -30,6 +31,7 @@ struct HomeView: View {
                         .padding(.vertical, 16)
                 }
                 .buttonStyle(.borderedProminent)
+                .coachMarkTarget(.addPhotoButton)
 
                 Text("1〜6枚を選ぶと自動でレイアウトします")
                     .font(.footnote)
@@ -61,7 +63,14 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView(store: presetStore)
+                SettingsView(store: presetStore) {
+                    // 設定の「チュートリアルを見る」: シートを閉じてから開始
+                    showSettings = false
+                    Task {
+                        try? await Task.sleep(for: .seconds(0.5))
+                        coachMarks.start()
+                    }
+                }
             }
             .navigationDestination(isPresented: $showEditor) {
                 EditorView(viewModel: viewModel, presetStore: presetStore)
@@ -79,9 +88,13 @@ struct HomeView: View {
             }
             .onAppear {
                 hasStoredSession = SessionStore.hasSession()
-                // タップ1を最短にするため初回はピッカーを自動で開く（仕様 2.1）。
-                // ただし再開できるセッションがあるときは選択を邪魔しない。
-                if !didAutoPresentPicker, !canResume {
+                // 初回起動はチュートリアルを優先（ピッカー自動表示と重ならないように）
+                if !coachMarks.hasSeen {
+                    didAutoPresentPicker = true
+                    coachMarks.startIfNeeded()
+                } else if !didAutoPresentPicker, !canResume {
+                    // タップ1を最短にするため初回はピッカーを自動で開く（仕様 2.1）。
+                    // ただし再開できるセッションがあるときは選択を邪魔しない。
                     didAutoPresentPicker = true
                     isPickerPresented = true
                 }
@@ -94,6 +107,8 @@ struct HomeView: View {
                 }
             }
         }
+        .environment(coachMarks)
+        .coachMarks(coachMarks)
     }
 
     // MARK: - プリセット一覧
@@ -180,6 +195,7 @@ struct HomeView: View {
                 }
                 hasStoredSession = true
                 showEditor = true
+                coachMarks.noteAction(.photosAdded)
             }
             pendingPreset = nil
         }

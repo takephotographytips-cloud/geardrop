@@ -8,6 +8,8 @@ struct AdjustPanel: View {
     /// ロック中のフレームをタップしたときに呼ばれる（ペイウォール表示）
     var onRequestPro: () -> Void
 
+    @Environment(CoachMarksController.self) private var coachMarks
+
     private let presetColors: [(color: CanvasColor, name: String)] = [
         (.white, "白"),
         (.black, "黒"),
@@ -20,8 +22,10 @@ struct AdjustPanel: View {
             sliderRow(
                 label: "余白",
                 value: $viewModel.spec.marginFraction,
-                range: CanvasSpec.marginRange
+                range: CanvasSpec.marginRange,
+                onEditingEnded: { coachMarks.noteAction(.marginChanged) }
             )
+            .coachMarkTarget(.marginSlider)
 
             // 間隔: 写真同士のガター幅（0〜10%）
             sliderRow(
@@ -127,7 +131,8 @@ struct AdjustPanel: View {
     private func sliderRow(
         label: String,
         value: Binding<CGFloat>,
-        range: ClosedRange<CGFloat>
+        range: ClosedRange<CGFloat>,
+        onEditingEnded: (() -> Void)? = nil
     ) -> some View {
         HStack(spacing: 12) {
             Text(label)
@@ -136,6 +141,8 @@ struct AdjustPanel: View {
             Slider(value: value, in: range) { editing in
                 if editing {
                     viewModel.registerUndoSnapshot()
+                } else {
+                    onEditingEnded?()
                 }
             }
             Text(Double(value.wrappedValue), format: .percent.precision(.fractionLength(0)))
