@@ -31,6 +31,10 @@ struct CoachMarkStep: Identifiable {
     let message: String
     /// 実操作での自動前進トリガー（nil なら「次へ」ボタンのみ）
     var action: CoachMarkAction? = nil
+    /// true なら「次へ」ボタンを出さず、実操作でのみ前進できる
+    /// （例: 写真追加。飛ばすと以降のステップが成立しないもの）。
+    /// 実操作で通過すると「戻る」でもこのステップより前へは戻れなくなる。
+    var requiresAction: Bool = false
     /// ターゲットが無いステップで吹き出しを寄せたい位置（nil なら中央）
     var anchorPoint: ((CGSize) -> CGPoint)? = nil
 }
@@ -48,7 +52,8 @@ extension CoachMarkStep {
             target: .addPhotoButton,
             title: "写真を選ぶ",
             message: "ここをタップして写真を追加します",
-            action: .photosAdded
+            action: .photosAdded,
+            requiresAction: true
         ),
         CoachMarkStep(
             id: "drag",
@@ -105,6 +110,9 @@ final class CoachMarksController {
 
     private(set) var isActive = false
     private(set) var stepIndex = 0
+    /// 「戻る」で戻れる下限。requiresAction のステップを実操作で通過すると更新される
+    /// （画面をまたぐため、戻ってもチュートリアルが成立しなくなるのを防ぐ）。
+    private var backBarrierIndex = 0
 
     let steps: [CoachMarkStep]
     private let defaults: UserDefaults
@@ -120,7 +128,7 @@ final class CoachMarksController {
     }
 
     var isLastStep: Bool { stepIndex == steps.count - 1 }
-    var canGoBack: Bool { stepIndex > 0 }
+    var canGoBack: Bool { stepIndex > backBarrierIndex }
 
     var hasSeen: Bool { defaults.bool(forKey: Self.seenDefaultsKey) }
 
@@ -134,6 +142,7 @@ final class CoachMarksController {
     func start() {
         guard !steps.isEmpty else { return }
         stepIndex = 0
+        backBarrierIndex = 0
         isActive = true
     }
 
@@ -156,8 +165,12 @@ final class CoachMarksController {
 
     /// ユーザーの実操作を通知する。現在のステップのトリガーと一致すれば次へ進む
     func noteAction(_ action: CoachMarkAction) {
-        guard isActive, currentStep?.action == action else { return }
+        guard isActive, let step = currentStep, step.action == action else { return }
         advance()
+        // 実操作必須のステップを通過したら、それより前へは戻れない
+        if step.requiresAction {
+            backBarrierIndex = stepIndex
+        }
     }
 
     private func finish() {
@@ -369,12 +382,19 @@ private struct CoachMarkOverlay: View {
                     .font(.subheadline)
                 }
 
-                Button(controller.isLastStep ? "完了" : "次へ") {
-                    controller.advance()
+                if step.requiresAction {
+                    // 実操作でのみ前進（飛ばすと以降が成立しないステップ）
+                    Text("操作すると進みます")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Button(controller.isLastStep ? "完了" : "次へ") {
+                        controller.advance()
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
                 }
-                .font(.subheadline.weight(.semibold))
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
             }
             .padding(.top, 4)
         }

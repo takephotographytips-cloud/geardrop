@@ -81,4 +81,25 @@ final class CoachMarksTests: XCTestCase {
         controller.noteAction(.photoDragged)
         XCTAssertFalse(controller.isActive)
     }
+
+    /// 実操作必須ステップ（写真追加）を通過したら「戻る」で戻れない。
+    /// 通過前は welcome へ戻れる。
+    func testBackBarrier_afterRequiresActionStep() {
+        let controller = makeController()
+        controller.start()
+        controller.advance() // → addPhotos
+        XCTAssertTrue(controller.steps[controller.stepIndex].requiresAction)
+        XCTAssertTrue(controller.canGoBack, "通過前は welcome へ戻れる")
+
+        controller.noteAction(.photosAdded) // 実操作で通過 → drag
+        XCTAssertEqual(controller.stepIndex, 2)
+        XCTAssertFalse(controller.canGoBack, "写真追加より前へは戻れない")
+
+        controller.advance() // → pinch
+        XCTAssertTrue(controller.canGoBack)
+        controller.goBack() // → drag
+        XCTAssertEqual(controller.stepIndex, 2)
+        controller.goBack() // バリアで止まる
+        XCTAssertEqual(controller.stepIndex, 2)
+    }
 }
