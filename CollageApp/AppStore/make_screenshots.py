@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""App Store スクリーンショット合成スクリプト(Mac で実行)。
+
+シミュレータ(iPhone 16 Pro Max)で撮ったスクショにキャッチコピーを載せ、
+提出サイズ 1320x2868 の完成品を出力する。
+
+使い方:
+  1. pip3 install pillow   (初回のみ)
+  2. シミュレータで6画面を ⌘S で撮影し、以下の名前で
+     ~/Downloads/stack-shots/ に置く:
+       shot1.png .. shot6.png  (内容は screenshot_copy.md の表の順)
+  3. python3 CollageApp/AppStore/make_screenshots.py
+  4. ~/Downloads/stack-shots/out/ に final_1.png .. final_6.png が出力される
+     → App Store Connect にそのままアップロード
+
+コピーを変えたいときは下の CAPTIONS を編集するだけ。
+"""
+
+import os
+import sys
+from pathlib import Path
+
+try:
+    from PIL import Image, ImageDraw, ImageFilter, ImageFont
+except ImportError:
+    sys.exit("Pillow が必要です: pip3 install pillow")
+
+# ===== 設定 =====
+CANVAS = (1320, 2868)          # 6.9インチ 提出サイズ
+BG = (0xF5, 0xF2, 0xED)        # ブランドのオフホワイト
+INK = (0x2A, 0x28, 0x24)
+SUB = (0x6E, 0x6A, 0x62)
+SHOT_DIR = Path.home() / "Downloads" / "stack-shots"
+OUT_DIR = SHOT_DIR / "out"
+
+# (メインコピー, サブコピー) screenshot_copy.md と同一
+CAPTIONS = [
+    ("3タップで、作品になる。", "選ぶ、ならべる、保存する。"),
+    ("フィルムの質感を、そのまま。", "ネガ・シネマ・プリント、4つのフレーム"),
+    ("余白が、写真を語る。", "ギャラリーのようなレイアウト"),
+    ("枠は固定、写真は自由。", "ドラッグとピンチで、思いのままに"),
+    ("色は、写真から拾う。", "余白・間隔・比率・背景色"),
+    ("画質に、一切の妥協なし。", "フル解像度・16bit処理・EXIF保持"),
+]
+
+# macOS の日本語フォント候補(上から順に探す)
+FONT_CANDIDATES = [
+    "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
+    "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
+    "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/Supplemental/ヒラギノ角ゴ Pro W6.otf",
+]
+
+
+def load_font(size):
+    for path in FONT_CANDIDATES:
+        if os.path.exists(path):
+            return ImageFont.truetype(path, size)
+    sys.exit("日本語フォントが見つかりません(macOS で実行してください)")
+
+
+def rounded_screenshot(shot, width, radius):
+    """スクショを指定幅に縮小し、角丸マスクを適用して返す"""
+    ratio = width / shot.width
+    shot = shot.resize((width, int(shot.height * ratio)), Image.LANCZOS)
+    mask = Image.new("L", shot.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle(
+        [(0, 0), (shot.width - 1, shot.height - 1)], radius=radius, fill=255
+    )
+    shot.putalpha(mask)
+    return shot
+
+
+def compose(index, shot_path, title, subtitle):
+    canvas = Image.new("RGB", CANVAS, BG)
+    draw = ImageDraw.Draw(canvas)
+
+    # キャッチコピー(中央揃え)
+    title_font = load_font(96)
+    sub_font = load_font(52)
+    tw = draw.textlength(title, font=title_font)
+    draw.text(((CANVAS[0] - tw) / 2, 170), title, font=title_font, fill=INK)
+    sw = draw.textlength(subtitle, font=sub_font)
+    draw.text(((CANVAS[0] - sw) / 2, 320), subtitle, font=sub_font, fill=SUB)
+
+    # スクリーンショット(角丸+影)
+    shot = Image.open(shot_path).convert("RGB")
+    shot = rounded_screenshot(shot, width=1110, radius=56)
+    x = (CANVAS[0] - shot.width) // 2
+    y = 470
+
+    shadow = Image.new("RGBA", CANVAS, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        [(x, y + 14), (x + shot.width, y + 14 + shot.height)],
+        radius=56, fill=(42, 40, 36, 70),
+    )
+    shadow = shadow.filter(ImageFilter.GaussianBlur(28))
+    canvas.paste(shadow, (0, 0), shadow)
+    canvas.paste(shot, (x, y), shot)
+
+    out = OUT_DIR / f"final_{index}.png"
+    canvas.save(out)
+    print(f"  ✔ {out.name}  ({title})")
+
+
+def main():
+    if not SHOT_DIR.exists():
+        sys.exit(f"フォルダがありません: {SHOT_DIR}\n"
+                 "シミュレータのスクショを shot1.png〜shot6.png の名前で置いてください")
+    OUT_DIR.mkdir(exist_ok=True)
+    made = 0
+    for i, (title, subtitle) in enumerate(CAPTIONS, start=1):
+        shot = SHOT_DIR / f"shot{i}.png"
+        if not shot.exists():
+            print(f"  - shot{i}.png が無いためスキップ")
+            continue
+        compose(i, shot, title, subtitle)
+        made += 1
+    print(f"完了: {made}枚 → {OUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()
