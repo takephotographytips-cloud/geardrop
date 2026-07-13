@@ -72,17 +72,37 @@ def rounded_screenshot(shot, width, radius):
     return shot
 
 
+def fitted_font(draw, text, base_size, max_width):
+    """max_width に収まるまでフォントサイズを自動で縮める"""
+    size = base_size
+    while size > 24:
+        font = load_font(size)
+        if draw.textlength(text, font=font) <= max_width:
+            return font
+        size -= 4
+    return load_font(size)
+
+
 def compose(index, shot_path, title, subtitle):
     canvas = Image.new("RGB", CANVAS, BG)
     draw = ImageDraw.Draw(canvas)
 
-    # キャッチコピー(中央揃え)
-    title_font = load_font(96)
-    sub_font = load_font(52)
+    # キャッチコピー(中央揃え・左右60px余白を必ず確保、長文は自動縮小)
+    side_margin = 60
+    max_text_width = CANVAS[0] - side_margin * 2
+    title_font = fitted_font(draw, title, 96, max_text_width)
+    sub_font = fitted_font(draw, subtitle, 52, max_text_width)
+
+    # 上下バランス: 見出しブロックを y=150〜440 に収めて中央配置
+    title_h = title_font.size
+    sub_h = sub_font.size
+    block_gap = 44
+    block_top = 150 + (290 - (title_h + block_gap + sub_h)) / 2
+
     tw = draw.textlength(title, font=title_font)
-    draw.text(((CANVAS[0] - tw) / 2, 170), title, font=title_font, fill=INK)
+    draw.text(((CANVAS[0] - tw) / 2, block_top), title, font=title_font, fill=INK)
     sw = draw.textlength(subtitle, font=sub_font)
-    draw.text(((CANVAS[0] - sw) / 2, 320), subtitle, font=sub_font, fill=SUB)
+    draw.text(((CANVAS[0] - sw) / 2, block_top + title_h + block_gap), subtitle, font=sub_font, fill=SUB)
 
     # スクリーンショット(角丸+影)
     shot = Image.open(shot_path).convert("RGB")
