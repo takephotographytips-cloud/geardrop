@@ -45,3 +45,7 @@ xcuserdata/
 DerivedData/
 *.xcuserstate
 *.moved-aside
+
+# Python
+__pycache__/
+*.pyc

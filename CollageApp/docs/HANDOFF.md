@@ -1,7 +1,8 @@
 # Stack (CollageApp) 引き継ぎ書
 
-どのセッション・どのモデルでも、これを読めば同じ精度で開発を継続できることを目的とした文書。
-最終更新: 2026-07-05(Phase 4 まで完了時点)
+どのエージェント(Claude / Codex / 他)・どのセッションでも、これを読めば同じ精度で
+開発を継続できることを目的とした文書。**作業開始前に必ず全文を読むこと。**
+最終更新: 2026-07-06(実装・提出素材すべて完了、App Store Connect 操作待ち)
 
 ---
 
@@ -22,12 +23,20 @@ D-STUDIO ダイヤ監督。日本語でやりとり。**リリースを急いで
 判断は速く、提案は「推奨案+理由」を1つ出す形が好まれる。仕様変更の要望は
 参考画像(競合アプリのスクショ)付きで来ることが多い。
 
-## 2. 現在の状態(2026-07-05)
+## 2. 現在の状態(2026-07-06)
 
-- ブランチ: `claude/phase-1-implementation-0elq6w`(全作業ここ。main 未マージ)
-- Phase 1〜3 完了、Phase 4(リリース準備)はコード側完了・ユーザーの手作業待ち
-- ユーザーは Mac + Xcode 26 で動作確認済み。シミュレータでテスト購入まで確認済み
-- 次のイベント: Apple Developer Program 加入 → App Store Connect 登録 → 審査提出
+- ブランチ: `claude/phase-1-implementation-0elq6w`(全作業ここ。main 未マージ。PR は未作成)
+- **アプリのコードは機能実装すべて完了**(Phase 1〜4 + 追加機能)。Mac + Xcode 26 で
+  ビルド・実機/シミュレータ動作・テスト購入まで確認済み
+- **App Store 提出素材もすべて完成**(アイコン / メタデータ / プライバシー・サポートサイト公開済み /
+  スクリーンショット5枚 生成済み)
+- アプリ名確定: **「Stack - 余白コラージュ」**(ホーム表示名は `Stack` = CFBundleDisplayName)
+- **残りは App Store Connect 上のユーザー手作業のみ**(下記セクション6)。エージェント側の
+  コード作業は、実機QAで出たバグ修正・審査リジェクト対応・機能追加が来たときのみ
+- 公開済みサイト(GitHub Pages, リポジトリ `takephotographytips-cloud/stack-site`):
+  - プライバシー: `https://takephotographytips-cloud.github.io/stack-site/privacy.html`
+  - サポート: `https://takephotographytips-cloud.github.io/stack-site/support.html`
+  - ソースは `AppStore/privacy_policy.html`(→公開時 `privacy.html` にリネーム)/ `support.html` / `index.html`
 
 ### フェーズ履歴と主要な設計変更
 
@@ -43,6 +52,8 @@ D-STUDIO ダイヤ監督。日本語でやりとり。**リリースを急いで
 | チュートリアル | 初回起動時の Coach Marks(`Views/CoachMarks.swift`)。ステップは `CoachMarkStep.stackTutorial` 配列で管理(追加・削除はここだけ)。ターゲット登録は `.coachMarkTarget(id)`(anchorPreference)、表示は HomeView ルートの `.coachMarks(controller)` + `.environment(controller)`。実操作で前進 = 各ビューが `noteAction(_:)` を呼ぶ(写真追加/ドラッグ/ピンチ/レイアウト/余白/保存)。既読は UserDefaults `hasSeenTutorial`、設定の「チュートリアルを見る」で再表示。保存ステップはツールバーのアンカー取得が不安定なため anchorPoint(右上座標)+くり抜きなしで対応。初回はピッカー自動表示を抑制してチュートリアル優先 |
 | Pro 拡張2 | **水平・回転補正**(Pro 限定)。`CellTransform.rotationDegrees` を有効化(90°単位 `quarterTurnsDegrees` + 微調整 `fineAngleDegrees` の合成、`normalizedDegrees` で (-180,180] に正規化)。カバー計算は回転対応: needW = W\|cosθ\|+H\|sinθ\| 等(θ=0 で旧式と一致)、オフセットは写真ローカル軸 (u,v) に射影してクランプ(Python 照合済み)。UI: 写真タップ → `selectedPhotoID` → PhotoAdjustPanel(±15°スライダー/90°回転/リセット)+ CellSelectionOverlay(三分割グリッド)。描画: プレビューは rotationEffect、書き出しは矩形中心軸の CGContext 回転(ExportRenderer では反転打ち消しの**前**に適用) |
 | Phase 4 | アイコン生成、リリース設定、App Store 素材ドラフト(`AppStore/`) |
+| チュートリアル整備 | 写真追加ステップは実操作必須(`requiresAction`)で「次へ」を出さず、通過後は「戻る」バリアで戻れない(画面をまたぐ破綻防止) |
+| 提出素材完成 | 名前確定、プライバシー/サポート/LP サイト公開、スクリーンショット5枚を `AppStore/make_screenshots.py` で生成(生のシミュレータ撮影 shot1〜5 にコピーを合成、1320×2868) |
 
 ## 3. アーキテクチャと不変条件
 
@@ -122,7 +133,8 @@ CollageApp/CollageApp/
     テストに書く(過去全フェーズでこの方法。的中している)
   - ビルド/テスト確認はユーザーの Mac(`git pull` → ⌘R / ⌘U)。または GitHub Actions の
     手動ワークフロー `iOS Build & Test`(macOS ランナー課金のため手動のみ)
-- **Xcode プロジェクトは objectVersion 77 / filesystem-synchronized groups**:
+- **Xcode プロジェクトは objectVersion 70 / filesystem-synchronized groups**
+  (当初 77 で作成→ユーザーの Xcode が 70 に自動調整):
   `CollageApp/CollageApp/` と `CollageAppTests/` 配下に**ファイルを置くだけで自動的にターゲットに入る**。
   pbxproj の編集はビルド設定変更時のみ(ID は 1A2B3C4D... の連番)
 - テストは XCTest(`@testable import CollageApp`)。実行できないぶん、
@@ -152,15 +164,21 @@ CollageApp/CollageApp/
 
 ## 6. 残タスク
 
-### 審査提出まで(ユーザー主導、サポートする)
-- [ ] Apple Developer 加入 → `AppStore/release_checklist.md` の手順1〜6
-- [ ] 実機での最終確認(特に: 16bit 書き出しのバンディング検証は α7V の実写 HEIF で)
-- [ ] スクリーンショット撮影(構成案は checklist 内。キャッチコピー詰めを頼まれる可能性大)
-- [ ] プライバシーポリシーの公開(文面は `AppStore/metadata_ja.md` に用意済み)
+### 審査提出まで(すべてユーザーの App Store Connect 手作業。エージェントは案内役)
+手順の詳細は `AppStore/release_checklist.md`。落としやすい点:
+- [ ] Xcode: Team 選択 + **In-App Purchase capability 追加** + 実機ビルド
+- [ ] 実機QA(`AppStore/device_qa_checklist.md`。特に 16bit 書き出しのバンディング検証)
+- [ ] ASC: アプリ登録(名前「Stack - 余白コラージュ」)
+- [ ] ASC: **IAP `com.dstudio.collageapp.pro` ¥980 登録 + 「初回バージョンと一緒に審査提出」にチェック**(初回リジェクトの定番)
+- [ ] メタデータ入力(`AppStore/metadata_ja.md` をコピペ)+ スクショ5枚 + プライバシー/サポート URL(公開済み)
+- [ ] Archive → アップロード → 審査へ提出
 
 ### 審査中/後(想定される依頼)
-- リジェクト対応(`.claude/skills/collage-release/SKILL.md` にプレイブック)
-- バグ修正 → バージョニング: hotfix は `CURRENT_PROJECT_VERSION` +1、機能追加は `MARKETING_VERSION` を上げる(pbxproj 内、Debug/Release 両方)
+- **リジェクト対応**: 文面を Guideline 番号で分類。定番は 2.1(IAP が見つからない=提出漏れ)/
+  3.1.1(復元ボタン=ペイウォールと設定に実装済み、場所を回答)/ 4.3(類似=差別化点を主張)/
+  5.1.1(プライバシー=権限文言・ポリシー URL 済み)。回答文は日本語+必要なら英語でドラフト
+- バグ修正 → バージョニング: hotfix は `CURRENT_PROJECT_VERSION` +1、機能追加は `MARKETING_VERSION`
+  を上げる(pbxproj 内、Debug/Release 両方)
 - 「前回の編集を再開」まわりは実機での長期利用で初めて出る不具合がありがち(容量・権限)
 
 ### Phase 5 候補(仕様書とレビュー要望より)
@@ -171,8 +189,22 @@ CollageApp/CollageApp/
 
 ## 7. 重要ファイルへのポインタ
 
-- 仕様書 v1.0: `CollageApp/collage_app_spec_for_claude_code.md`
-- 実装状況: `CollageApp/README.md`
-- 提出素材: `CollageApp/AppStore/metadata_ja.md`
-- リリース手順: `CollageApp/AppStore/release_checklist.md`
-- CI: `.github/workflows/ios-build-test.yml`(手動実行のみ)
+- 仕様書 v1.0: `CollageApp/collage_app_spec_for_claude_code.md`(v1.0。以後の変更は本書に記載)
+- 実装状況: `CollageApp/README.md`(フェーズごとのチェックリスト)
+- 提出メタデータ: `CollageApp/AppStore/metadata_ja.md`(名前/説明/キーワード/IAP/審査メモ)
+- リリース手順書: `CollageApp/AppStore/release_checklist.md`
+- 実機QAリスト: `CollageApp/AppStore/device_qa_checklist.md`
+- スクショ生成: `CollageApp/AppStore/make_screenshots.py` / 構成: `screenshot_copy.md`
+- サンプル写真投入: `CollageApp/AppStore/fetch_sample_photos.sh`
+- 公開サイト元: `AppStore/privacy_policy.html` / `support.html` / `index.html`
+- CI: `.github/workflows/ios-build-test.yml`(macOS ランナー・手動実行のみ)
+
+## 8. エージェント作業のクイックスタート
+
+1. 本書と `README.md` を読む。仕様の疑問は `collage_app_spec_for_claude_code.md`
+2. コードを変更したら、計算ロジックは手元で数値検証 → XCTest に期待値を書く
+   (この開発環境では iOS ビルド不可。ビルド/テストはユーザーの Mac が `git pull` → ⌘R / ⌘U で実施)
+3. 機能単位でコミット(メッセージは英語、既存 `git log` のスタイルに合わせる)→
+   `git push -u origin claude/phase-1-implementation-0elq6w`(**このブランチのみ。main に直接触れない**)
+4. ユーザーへ日本語で報告(セクション 4 の報告フォーマット)
+5. **不変条件(セクション3)を必ず守る**。特にプレビュー=書き出しの一致と CanvasSpec の後方互換
